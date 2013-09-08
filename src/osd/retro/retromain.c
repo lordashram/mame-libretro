@@ -214,7 +214,8 @@ static int parsePath(char* path, char* gamePath, char* gameName) {
 static int getGameInfo(char* gameName, int* rotation, int* driverIndex) {
 	int gameFound = 0;
 	int drvindex;
-
+//FIXME for 0.149 , prevouisly in driver.h
+#if 0
 	//check invalid game name
 	if (gameName[0] == 0) {
 		return 0;
@@ -229,7 +230,9 @@ static int getGameInfo(char* gameName, int* rotation, int* driverIndex) {
 				write_log("%-18s\"%s\" rot=%i \n", drivers[drvindex]->name, drivers[drvindex]->description, *rotation);
 		}
 	}
-
+#else 
+	gameFound = 1;
+#endif
 	return gameFound;
 } 
 

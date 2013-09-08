@@ -1,4 +1,4 @@
-MAME.0139-LIBRETRO WIP
+MAME.0149-LIBRETRO WIP
 
 Very WIP port MAME 0.149 for libretro using libco.
 
@@ -7,8 +7,8 @@ AND BE AWARE OFF THIS WHEN YOU USE IT (AT YOUR OWN RISK).
  
 Source base is mame0.149 official source: http://www.mamedev.org/downloader.php?file=releases/mame0149s.zip
 
-OSD code is highly inspired by source code of others mame ports :
- 
+OSD code is highly inspired by source code of the SDL osd of the official mame build and by others mame ports :
+
 - librerto-mame0.78 port : https://github.com/libretro/mame2003-libretro
 - ps3 mame0.125 port     : http://www.volny.cz/molej/ps3/mame_ps3.htm
 - mame4droid             : http://code.google.com/p/imame4all/source/browse/

@@ -49,8 +49,8 @@ unsigned retro_api_version(void)
 void retro_get_system_info(struct retro_system_info *info)
 {   	
    memset(info, 0, sizeof(*info));
-   info->library_name = "mame2010-libretro";
-   info->library_version = "0.139";
+   info->library_name = "mame2013-libretro";
+   info->library_version = "0.149";
    info->valid_extensions = "zip";
    info->need_fullpath = true;   
    info->block_extract = true;
