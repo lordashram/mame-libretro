@@ -350,7 +350,7 @@ $(OBJ)/libflac.a: $(LIBFLACOBJS)
 
 $(LIBOBJ)/libflac/%.o: $(LIBSRC)/libflac/libflac/%.c | $(OSPREBUILD)
 	@echo Compiling $<...
-	$(CC) $(CDEFS) $(CONLYFLAGS) $(CCOMFLAGS) $(FLACOPTS) -I$(LIBSRC)/libflac/include -c $< -o $@
+	$(CC_AS) $(CDEFS) $(CONLYFLAGS) $(CCOMFLAGS) $(FLACOPTS) -I$(LIBSRC)/libflac/include -c $< -o $@
 
 
 
@@ -398,7 +398,8 @@ LIBPMOBJS = \
 	$(LIBOBJ)/portmidi/porttime.o \
 	$(LIBOBJ)/portmidi/pmutil.o
 
-ifeq ($(TARGETOS),linux)
+# FIXME LIBRETRO SEEMS TO NOT DETECT TARGETOS
+#ifeq ($(TARGETOS),linux)
 PMOPTS = -DPMALSA=1
 
 LIBPMOBJS += \
@@ -407,7 +408,7 @@ LIBPMOBJS += \
 	$(LIBOBJ)/portmidi/finddefaultlinux.o \
 	$(LIBOBJ)/portmidi/ptlinux.o
 
-endif
+#endif
 
 ifeq ($(TARGETOS),macosx)
 LIBPMOBJS += \
@@ -430,7 +431,7 @@ $(OBJ)/libportmidi.a: $(LIBPMOBJS)
 
 $(LIBOBJ)/portmidi/%.o: $(LIBSRC)/portmidi/%.c | $(OSPREBUILD)
 	@echo Compiling $<...
-	$(CC) $(CDEFS) $(PMOPTS) $(CCOMFLAGS) $(CONLYFLAGS) -I$(LIBSRC)/portmidi/ -c $< -o $@
+	$(CC_AS) $(CDEFS) $(PMOPTS) $(CCOMFLAGS) $(CONLYFLAGS) -I$(LIBSRC)/portmidi/ -c $< -o $@
 
 #-------------------------------------------------
 # LUA library objects

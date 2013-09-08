@@ -57,7 +57,7 @@ FILE2STROBJS = \
 
 $(FILE2STR_TARGET): $(FILE2STROBJS) $(LIBOCORE)
 	@echo Linking $@...
-	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
+	$(NATIVELD) $(NATIVELDFLAGS) $^ $(LIBS) -o $@
 
 
 
@@ -70,7 +70,7 @@ MAKEDEPOBJS = \
 
 $(MAKEDEP_TARGET): $(MAKEDEPOBJS) $(LIBUTIL) $(LIBOCORE) $(ZLIB)
 	@echo Linking $@...
-	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
+	$(NATIVELD) $(NATIVELDFLAGS) $^ $(LIBS) -o $@
 
 
 
@@ -83,7 +83,7 @@ MAKELISTOBJS = \
 
 $(MAKELIST_TARGET): $(MAKELISTOBJS) $(LIBUTIL) $(LIBOCORE) $(ZLIB)
 	@echo Linking $@...
-	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
+	$(NATIVELD) $(NATIVELDFLAGS) $^ $(LIBS) -o $@
 
 
 
@@ -96,7 +96,7 @@ PNG2BDCOBJS = \
 
 $(PNG2BDC_TARGET): $(PNG2BDCOBJS) $(LIBUTIL) $(LIBOCORE) $(ZLIB)
 	@echo Linking $@...
-	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
+	$(NATIVELD) $(NATIVELDFLAGS) $^ $(LIBS) -o $@
 
 
 
@@ -109,6 +109,6 @@ VERINFOOBJS = \
 
 $(VERINFO_TARGET): $(VERINFOOBJS) $(LIBOCORE)
 	@echo Linking $@...
-	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
+	$(NATIVELD) $(NATIVELDFLAGS) $^ $(LIBS) -o $@
 
 endif

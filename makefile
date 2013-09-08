@@ -15,6 +15,26 @@
 #################   BEGIN USER-CONFIGURABLE OPTIONS   #####################
 ###########################################################################
 
+NATIVE :=0
+
+ifeq ($(platform), android)
+BUILD_AND :=1
+else
+BUILD_AND :=0
+endif
+
+OPTIMIZE=2
+CROSS_BUILD :=1 
+CROSSBUILD  :=1 
+TARGETOS=linux  
+SUBTARGET=mame
+OSD=retro
+
+ifeq ($(BUILD_AND),1)
+FORCE_DRC_C_BACKEND = 1
+endif
+
+NOWERROR = 1
 
 #-------------------------------------------------
 # specify core target: mame, mess, etc.
@@ -217,7 +237,7 @@ endif
 BUILD_EXPAT = 1
 
 # uncomment next line to build zlib as part of MAME build
-BUILD_ZLIB = 1
+#BUILD_ZLIB = 1
 
 # uncomment next line to build libflac as part of MAME build
 BUILD_FLAC = 1
@@ -370,7 +390,7 @@ endif
 FULLNAME = $(PREFIX)$(PREFIXSDL)$(NAME)$(SUFFIX)$(SUFFIX64)$(SUFFIXDEBUG)$(SUFFIXPROFILE)
 
 # add an EXE suffix to get the final emulator name
-EMULATOR = $(FULLNAME)$(EXE)
+EMULATOR = $(FULLNAME)$(EXE)-libretro.so
 
 
 
@@ -632,8 +652,8 @@ LIBVIDEO = $(OBJ)/$(TARGET)/$(SUBTARGET)/libvideo.a
 LIBMACHINE = $(OBJ)/$(TARGET)/$(SUBTARGET)/libmachine.a
 LIBUTIL = $(OBJ)/libutil.a
 LIBOCORE = $(OBJ)/libocore.a
-LIBOSD = $(OBJ)/libosd.a
-
+#LIBOSD = $(OBJ)/libosd.a
+LIBOSD = $(OBJ)/osd/retro/retromain.o $(OBJ)/osd/retro/libco/libco.o
 VERSIONOBJ = $(OBJ)/version.o
 EMUINFOOBJ = $(OBJ)/$(TARGET)/$(TARGET).o
 DRIVLISTSRC = $(OBJ)/$(TARGET)/$(SUBTARGET)/drivlist.c
@@ -708,6 +728,39 @@ ifneq (,$(findstring clang,$(CC)))
 LIBS += -lstdc++ -lpthread
 endif
 
+
+
+ifeq ($(BUILD_AND),0)
+
+CCOMFLAGS += -fPIC -fsigned-char -finline  -fno-common -fno-builtin -fweb -frename-registers -falign-functions=16 -fsingle-precision-constant
+PLATCFLAGS += -DPC_BUILD -DRETRO -DALIGN_INTS -DALIGN_SHORTS -DLSB_FIRST -fstrict-aliasing -fno-merge-constants 
+LDFLAGS +=  -fPIC -shared -Wl,--version-script=src/osd/retro/link.T
+NATIVELD = g++
+NATIVELDFLAGS = -Wl,--warn-common -lstdc++
+NATIVECC = g++
+NATIVECFLAGS = -std=gnu99
+CC_AS = gcc 
+CC = g++
+AR = @ar
+LD = g++ 
+CCOMFLAGS += $(PLATCFLAGS) -ffast-math  
+else
+
+CCOMFLAGS += -fPIC -mstructure-size-boundary=32 -mthumb-interwork -falign-functions=16 -fsigned-char -finline  -fno-common -fno-builtin -fweb -frename-registers -falign-functions=16 -fsingle-precision-constant
+PLATCFLAGS += -march=armv7-a -mfloat-abi=softfp -DRETRO -DRETRO_AND -DALIGN_INTS -DALIGN_SHORTS -DLSB_FIRST -fstrict-aliasing -fno-merge-constants -DSDLMAME_NO64BITIO -DANDTIME -DRANDPATH -DANDROID_BUILD
+LDFLAGS += -Wl,--fix-cortex-a8 -llog -fPIC -shared -Wl,--version-script=src/osd/retro/link.T
+NATIVELD = g++
+NATIVELDFLAGS = -Wl,--warn-common -lstdc++
+NATIVECC = g++
+NATIVECFLAGS = -std=gnu99 
+CC_AS = @arm-linux-androideabi-gcc
+CC = @arm-linux-androideabi-g++
+AR = @arm-linux-androideabi-ar
+LD = @arm-linux-androideabi-g++ 
+CCOMFLAGS += $(PLATCFLAGS) -ffast-math  
+
+endif
+
 #-------------------------------------------------
 # 'default' target needs to go here, before the
 # include files which define additional targets
@@ -764,6 +817,14 @@ emulator: maketree $(BUILD) $(EMULATOR)
 
 buildtools: maketree $(BUILD)
 
+ifeq ($(NATIVE),1)
+	cp -R $(OBJ)/build/* prec-build/
+	$(RM) -r $(OBJ)/osd
+	$(RM) -r $(OBJ)/lib/util
+	$(RM) -r $(OBJ)/libutil.a
+	$(RM) -r $(OBJ)/libocore.a
+endif
+
 tools: maketree $(TOOLS)
 
 maketree: $(sort $(OBJDIRS))
@@ -779,6 +840,7 @@ clean: $(OSDCLEAN)
 	$(RM) depend_mame.mak
 	$(RM) depend_mess.mak
 	$(RM) depend_ume.mak
+	$(RM) prec-build/*
 ifdef MAP
 	@echo Deleting $(FULLNAME).map...
 	$(RM) $(FULLNAME).map
@@ -804,6 +866,25 @@ tests: $(REGTESTS)
 $(sort $(OBJDIRS)):
 	$(MD) -p $@
 
+ifeq ($(NATIVE),0)
+
+$(OBJ)/build/file2str:
+	mkdir -p $(OBJ)/build
+	cp -R prec-build/file2str $(OBJ)/build 
+
+$(OBJ)/build/m68kmake:
+	cp -R prec-build/m68kmake $(OBJ)/build 
+
+$(OBJ)/build/png2bdc:
+	cp -R prec-build/png2bdc $(OBJ)/build 
+
+$(OBJ)/build/tmsmake:
+	cp -R prec-build/tmsmake $(OBJ)/build 
+
+$(OBJ)/build/verinfo:
+	cp -R prec-build/verinfo $(OBJ)/build 
+
+endif
 
 
 #-------------------------------------------------
@@ -831,6 +912,11 @@ endif
 #-------------------------------------------------
 # generic rules
 #-------------------------------------------------
+
+ifeq ($(BUILD_AND),1)
+$(LIBCOOBJ)/armeabi_asm.o:
+	$(CC_AS) -c $(SRC)/osd/$(OSD)/libco/armeabi_asm.S -o $(LIBCOOBJ)/armeabi_asm.o
+endif
 
 $(OBJ)/%.o: $(SRC)/%.c | $(OSPREBUILD)
 	@echo Compiling $<...
