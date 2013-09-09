@@ -158,6 +158,18 @@ static void initInput(running_machine &machine){
       input_device_item_add_p1(P1_device, "RetroPad P1 X", &P1_state[KEY_BUTTON_3], ITEM_ID_LALT, pad1_get_state);
       input_device_item_add_p1(P1_device, "RetroPad P1 B", &P1_state[KEY_BUTTON_2], ITEM_ID_SPACE, pad1_get_state);
    }
+  else
+   if (
+         (core_stricmp(machine.system().name, "ehrgeiz") == 0) ||
+         (core_stricmp(machine.system().parent, "ehrgeiz") == 0)
+         )
+   {
+      /* Ehrgeiz */
+      input_device_item_add_p1(P1_device, "RetroPad P1 Y", &P1_state[KEY_BUTTON_4], ITEM_ID_LCONTROL, pad1_get_state);
+      //input_device_item_add_p1(P1_device, "RetroPad P1 X", &P1_state[KEY_BUTTON_3], ITEM_ID_LALT, pad1_get_state);
+      input_device_item_add_p1(P1_device, "RetroPad P1 B", &P1_state[KEY_BUTTON_2], ITEM_ID_LALT, pad1_get_state);
+      input_device_item_add_p1(P1_device, "RetroPad P1 A", &P1_state[KEY_BUTTON_1], ITEM_ID_SPACE, pad1_get_state);
+   }
    else
    if (
          (core_stricmp(machine.system().name, "ts2") == 0) ||
@@ -216,6 +228,10 @@ static void initInput(running_machine &machine){
          (core_stricmp(machine.system().parent, "sfex2") == 0) ||
          (core_stricmp(machine.system().name, "sfex2p") == 0) ||
          (core_stricmp(machine.system().parent, "sfex2p") == 0) ||
+         (core_stricmp(machine.system().name, "rvschool") == 0) ||
+         (core_stricmp(machine.system().parent, "rvschool") == 0) ||
+         (core_stricmp(machine.system().name, "starglad") == 0) ||
+         (core_stricmp(machine.system().parent, "starglad") == 0) ||
          (core_stricmp(machine.system().name, "sfa3") == 0) ||
          (core_stricmp(machine.system().parent, "sfa3") == 0)
          )
