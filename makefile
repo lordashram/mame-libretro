@@ -343,7 +343,7 @@ LD = @g++
 MD = -mkdir$(EXE)
 RM = @rm -f
 OBJDUMP = @objdump
-PYTHON = @python
+PYTHON = @python2
 
 
 #-------------------------------------------------
