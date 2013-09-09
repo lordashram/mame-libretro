@@ -124,12 +124,12 @@ software_renderer<UINT16, 3,2,3, 11,5,0>::draw_primitives(primlist, surfptr, min
 
 		primlist.release_lock();
 
-		//colib_mainthread();
+		//co_switch(mainThread);
 	} 
 	else
     		draw_this_frame = false;
 
-	colib_mainthread();
+   co_switch(mainThread);
 }  
  
  
