@@ -818,6 +818,7 @@ emulator: maketree $(BUILD) $(EMULATOR)
 buildtools: maketree $(BUILD)
 
 ifeq ($(NATIVE),1)
+	mkdir prec-build 
 	cp -R $(OBJ)/build/* prec-build/
 	$(RM) -r $(OBJ)/osd
 	$(RM) -r $(OBJ)/lib/util
@@ -840,7 +841,7 @@ clean: $(OSDCLEAN)
 	$(RM) depend_mame.mak
 	$(RM) depend_mess.mak
 	$(RM) depend_ume.mak
-	$(RM) prec-build/*
+	$(RM) -r prec-build
 ifdef MAP
 	@echo Deleting $(FULLNAME).map...
 	$(RM) $(FULLNAME).map
