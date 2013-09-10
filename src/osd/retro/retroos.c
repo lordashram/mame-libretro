@@ -11,9 +11,15 @@
 
 #include <stdlib.h>
 #include <unistd.h>
+#ifdef WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#else
 #include <sys/mman.h>
-#include <time.h>
 #include <sys/time.h>
+#endif
+
+#include <time.h>
 #include <sys/stat.h>
 
 // MAME headers
@@ -27,13 +33,17 @@
 
 osd_ticks_t osd_ticks(void)
 {
-		struct timeval    tp;
-		static osd_ticks_t start_sec = 0;
+#ifdef _WIN32
+   return 0; /* stub */
+#else
+   struct timeval    tp;
+   static osd_ticks_t start_sec = 0;
 
-		gettimeofday(&tp, NULL);
-		if (start_sec==0)
-			start_sec = tp.tv_sec;
-		return (tp.tv_sec - start_sec) * (osd_ticks_t) 1000000 + tp.tv_usec;
+   gettimeofday(&tp, NULL);
+   if (start_sec==0)
+      start_sec = tp.tv_sec;
+   return (tp.tv_sec - start_sec) * (osd_ticks_t) 1000000 + tp.tv_usec;
+#endif
 }
 
 osd_ticks_t osd_ticks_per_second(void)
@@ -132,7 +142,27 @@ char *osd_getenv(const char *name)
 
 int osd_setenv(const char *name, const char *value, int overwrite)
 {
-	return setenv(name, value, overwrite);
+#if defined(WIN32)
+   char *buf;
+   int result;
+
+   if (!overwrite)
+   {
+      if (osd_getenv(name) != NULL)
+         return 0;
+   }
+   buf = (char *) osd_malloc_array(strlen(name)+strlen(value)+2);
+   sprintf(buf, "%s=%s", name, value);
+   result = putenv(buf);
+
+   /* will be referenced by environment
+    * Therefore it is not freed here
+    */
+
+   return result;
+#else
+   return setenv(name, value, overwrite);
+#endif
 }
 
 #if defined (SDLMAME_SDL2)
@@ -264,13 +294,13 @@ osd_directory_entry *osd_stat(const char *path)
 {
 	int err;
 	osd_directory_entry *result = NULL;
-	#if defined(SDLMAME_NO64BITIO) || defined(SDLMAME_BSD)
+	#if defined(SDLMAME_NO64BITIO) || defined(WIN32) || defined(SDLMAME_BSD)
 	struct stat st;
 	#else
 	struct stat64 st;
 	#endif
 
-	#if defined(SDLMAME_NO64BITIO) || defined(SDLMAME_BSD)
+	#if defined(SDLMAME_NO64BITIO) || defined(WIN32) || defined(SDLMAME_BSD)
 	err = stat(path, &st);
 	#else
 	err = stat64(path, &st);

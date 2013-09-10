@@ -15,6 +15,7 @@
 
 // standard C headers
 #include <math.h>
+#include <stdint.h>
 #include <unistd.h>
 
 // MAME headers
@@ -49,7 +50,13 @@ struct osd_event {
 //============================================================
 
 struct osd_thread {
+#ifdef WIN32
+   HANDLE handle;
+   osd_thread_callback callback;
+   void *params;
+#else
 	pthread_t           thread;
+#endif
 };
 
 struct osd_scalable_lock
@@ -74,7 +81,11 @@ osd_scalable_lock *osd_scalable_lock_alloc(void)
 
 INT32 osd_scalable_lock_acquire(osd_scalable_lock *lock)
 {
+#if defined(WIN32)
+   EnterCriticalSection((LPCRITICAL_SECTION)&lock->lock);
+#else
 	osd_lock_acquire(lock->lock);
+#endif
 	return 0;
 }
 
@@ -290,6 +301,19 @@ int osd_event_wait(osd_event *event, osd_ticks_t timeout)
 //============================================================
 //  osd_thread_create
 //============================================================
+#ifdef WIN32
+static unsigned __stdcall worker_thread_entry(void *param)
+{
+   osd_thread *thread = (osd_thread *) param;
+   void *res;
+   res = thread->callback(thread->params);
+#ifdef PTR64
+   return (unsigned) (long long) res;
+#else
+   return (unsigned) res;
+#endif
+}
+#endif
 
 osd_thread *osd_thread_create(osd_thread_callback callback, void *cbparam)
 {
@@ -297,6 +321,12 @@ osd_thread *osd_thread_create(osd_thread_callback callback, void *cbparam)
 	pthread_attr_t  attr;
 
 	thread = (osd_thread *)calloc(1, sizeof(osd_thread));
+#ifdef WIN32
+   thread->callback = callback;
+   thread->params = cbparam;
+   uintptr_t handle = _beginthreadex(NULL, 0, worker_thread_entry, thread, 0, NULL);
+   thread->handle = (HANDLE)handle;
+#else
 	pthread_attr_init(&attr);
 	pthread_attr_setinheritsched(&attr, PTHREAD_INHERIT_SCHED);
 	if ( pthread_create(&thread->thread, &attr, callback, cbparam) != 0 )
@@ -304,6 +334,7 @@ osd_thread *osd_thread_create(osd_thread_callback callback, void *cbparam)
 		free(thread);
 		return NULL;
 	}
+#endif
 	return thread;
 }
 
@@ -313,6 +344,13 @@ osd_thread *osd_thread_create(osd_thread_callback callback, void *cbparam)
 
 int osd_thread_adjust_priority(osd_thread *thread, int adjust)
 {
+#ifdef WIN32
+   if (adjust)
+      SetThreadPriority(thread->handle, THREAD_PRIORITY_ABOVE_NORMAL);
+   else
+      SetThreadPriority(thread->handle, GetThreadPriority(GetCurrentThread()));
+   return TRUE;
+#else
 	struct sched_param  sched;
 	int                 policy;
 
@@ -326,6 +364,7 @@ int osd_thread_adjust_priority(osd_thread *thread, int adjust)
 	}
 	else
 		return FALSE;
+#endif
 }
 
 //============================================================
@@ -334,7 +373,9 @@ int osd_thread_adjust_priority(osd_thread *thread, int adjust)
 
 int osd_thread_cpu_affinity(osd_thread *thread, UINT32 mask)
 {
-#if !defined(NO_AFFINITY_NP)
+#if defined(__GNUC__) && defined(WIN32)
+   return TRUE; /* stub */
+#elif !defined(NO_AFFINITY_NP)
 	cpu_set_t   cmask;
 	pthread_t   lthread;
 	int         bitnum;
@@ -368,8 +409,14 @@ int osd_thread_cpu_affinity(osd_thread *thread, UINT32 mask)
 
 void osd_thread_wait_free(osd_thread *thread)
 {
+#if defined(WIN32)
+   WaitForSingleObject(thread->handle, INFINITE);
+   CloseHandle(thread->handle);
+   free(thread);
+#else
 	pthread_join(thread->thread, NULL);
 	free(thread);
+#endif
 }
 
 //============================================================
@@ -378,5 +425,9 @@ void osd_thread_wait_free(osd_thread *thread)
 
 void osd_process_kill(void)
 {
+#if defined(WIN32)
+   TerminateProcess(GetCurrentProcess(), -1);
+#else
 	kill(getpid(), SIGKILL);
+#endif
 }
