@@ -337,11 +337,11 @@ BUILD_EXE = $(EXE)
 endif
 
 # compiler, linker and utilities
-AR = @ar
-CC = @gcc
-LD = @g++
+AR ?= @ar
+CC ?= @gcc
+LD ?= @g++
 MD = -mkdir$(EXE)
-RM = @rm -f
+RM ?= @rm -f
 OBJDUMP = @objdump
 PYTHON = @python2
 
@@ -739,10 +739,10 @@ NATIVELD = g++
 NATIVELDFLAGS = -Wl,--warn-common -lstdc++
 NATIVECC = g++
 NATIVECFLAGS = -std=gnu99
-CC_AS = gcc 
-CC = g++
-AR = @ar
-LD = g++ 
+CC_AS ?= @gcc 
+CC ?= @g++
+AR ?= @ar
+LD ?= @g++ 
 CCOMFLAGS += $(PLATCFLAGS) -ffast-math  
 else
 
