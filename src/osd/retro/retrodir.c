@@ -43,7 +43,7 @@
 #define INVPATHSEPCH '\\'
 #endif
 
-#if defined(SDLMAME_DARWIN) || defined(WIN32) || defined(SDLMAME_NO64BITIO) || defined(SDLMAME_BSD) || defined(SDLMAME_OS2) || defined(SDLMAME_HAIKU)
+#if defined(__MACH__) || defined(WIN32) || defined(SDLMAME_NO64BITIO) || defined(SDLMAME_BSD) || defined(SDLMAME_OS2) || defined(SDLMAME_HAIKU)
 typedef struct dirent sdl_dirent;
 typedef struct stat sdl_stat;
 #define sdl_readdir readdir
@@ -55,7 +55,7 @@ typedef struct stat64 sdl_stat;
 #define sdl_stat_fn stat64
 #endif
 
-#define HAS_DT_XXX defined(SDLMAME_LINUX) || defined(SDLMAME_BSD) || defined(SDLMAME_DARWIN)
+#define HAS_DT_XXX defined(SDLMAME_LINUX) || defined(SDLMAME_BSD) || defined(__MACH__)
 
 struct osd_directory
 {

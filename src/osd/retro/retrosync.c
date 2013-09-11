@@ -375,7 +375,7 @@ int osd_thread_cpu_affinity(osd_thread *thread, UINT32 mask)
 {
 #if defined(__GNUC__) && defined(WIN32)
    return TRUE; /* stub */
-#elif !defined(NO_AFFINITY_NP)
+#elif !defined(NO_AFFINITY_NP) && !defined(__MACH__)
 	cpu_set_t   cmask;
 	pthread_t   lthread;
 	int         bitnum;
