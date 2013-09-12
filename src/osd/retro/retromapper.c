@@ -49,28 +49,28 @@ unsigned retro_api_version(void)
 void retro_get_system_info(struct retro_system_info *info)
 {   	
    memset(info, 0, sizeof(*info));
-   info->library_name = "mame2013-libretro";
+   info->library_name = "MAME 2013";
    info->library_version = "0.149";
-   info->valid_extensions = "zip";
+   info->valid_extensions = "zip|chd";
    info->need_fullpath = true;   
    info->block_extract = true;
 }
 
 void retro_get_system_av_info(struct retro_system_av_info *info)
 {
-        info->geometry.base_width = 640;
-    	info->geometry.base_height =480;
+   info->geometry.base_width = 640;
+   info->geometry.base_height =480;
 
 #ifndef ANDTIME 
-    	info->geometry.max_width = 1024;
-    	info->geometry.max_height = 768;
+   info->geometry.max_width = 1024;
+   info->geometry.max_height = 768;
 #else    	
-    	info->geometry.max_width =  640;
-    	info->geometry.max_height = 480;
+   info->geometry.max_width =  640;
+   info->geometry.max_height = 480;
 #endif
-    	info->geometry.aspect_ratio =4/3;
-    	info->timing.fps = 60;
-    	info->timing.sample_rate = 48000.0;
+   info->geometry.aspect_ratio =4/3;
+   info->timing.fps = 60;
+   info->timing.sample_rate = 48000.0;
 }
 
 static void retro_wrap_emulator()
