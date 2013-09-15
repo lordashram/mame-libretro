@@ -7,10 +7,6 @@ char RPATH[512];
 extern "C" int mmain(int argc, const char *argv);
 extern bool draw_this_frame;
 
-#ifdef ANDTIME 
-	#define M16B //16bits color for android
-#endif
-
 #define M16B
 
 #ifdef M16B
@@ -57,7 +53,7 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
    info->geometry.base_width = 640;
    info->geometry.base_height =480;
 
-#ifndef ANDTIME 
+#ifndef RETRO_AND 
    info->geometry.max_width = 1024;
    info->geometry.max_height = 768;
 #else    	

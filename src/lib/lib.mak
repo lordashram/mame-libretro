@@ -398,8 +398,10 @@ LIBPMOBJS = \
 	$(LIBOBJ)/portmidi/porttime.o \
 	$(LIBOBJ)/portmidi/pmutil.o
 
-# FIXME LIBRETRO SEEMS TO NOT DETECT TARGETOS
+
 #ifeq ($(TARGETOS),linux)
+# FIXME LIBRETRO SEEMS TO NOT DETECT TARGETOS
+ifeq ($(platform),unix)
 PMOPTS = -DPMALSA=1
 
 LIBPMOBJS += \
@@ -408,7 +410,7 @@ LIBPMOBJS += \
 	$(LIBOBJ)/portmidi/finddefaultlinux.o \
 	$(LIBOBJ)/portmidi/ptlinux.o
 
-#endif
+endif
 
 ifeq ($(TARGETOS),macosx)
 LIBPMOBJS += \
@@ -484,4 +486,4 @@ endif
 
 $(LIBOBJ)/lua/%.o: $(LIBSRC)/lua/%.c | $(OSPREBUILD)
 	@echo Compiling $<...
-	$(CC) $(CDEFS) $(CCOMFLAGS) $(CONLYFLAGS) -DLUA_COMPAT_ALL $(LUA_FLAGS) -c $< -o $@
+	$(CC_AS) $(CDEFS) $(CCOMFLAGS) $(CONLYFLAGS) -DLUA_COMPAT_ALL $(LUA_FLAGS) -c $< -o $@

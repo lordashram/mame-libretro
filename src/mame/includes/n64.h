@@ -226,7 +226,11 @@ private:
 	UINT32 si_pif_addr;
 	UINT32 si_pif_addr_rd64b;
 	UINT32 si_pif_addr_wr64b;
+#ifdef RETRO_AND
+	UINT32 msi_status;
+#else
 	UINT32 si_status;
+#endif
 	UINT32 cic_status;
 	int cic_type;
 

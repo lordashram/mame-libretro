@@ -10,8 +10,6 @@ empty
 #ifndef __OSINLINE__
 #define __OSINLINE__
 
-#include "eminline.h"
-
 //============================================================
 //  INLINE FUNCTIONS
 //============================================================
@@ -31,12 +29,34 @@ empty
 
 #endif
 
-#ifdef ANDROID_BUILD
+#ifdef RETRO_AND
 #ifndef YieldProcessor
 #define YieldProcessor() do {} while (0)
 #define osd_yield_processor() YieldProcessor()
 #endif
 
 #endif
+
+#define mul_32x32(a, b) ((INT64)a * (INT64)b)
+#define mulu_32x32(a, b) ((UINT64)a * (UINT64)b)
+#define mul_32x32_hi(a, b) ((UINT32)(((INT64)a * (INT64)b) >> 32))
+#define mul_32x32_shift(a, b, shift) ((INT32)(((INT64)a * (INT64)b) >> shift))
+#define mulu_32x32_shift(a, b, shift) ((UINT32)(((UINT64)a * (UINT64)b) >> shift))
+#define div_64x32(a, b) (a / (INT64)b)
+#define divu_64x32(a, b) (a / (UINT64)b)
+
+#define div_32x32_shift(a, b, shift) (((INT64)a << shift) / (INT64)b)
+#define divu_32x32_shift(a, b, shift) (((UINT64)a << shift) / (UINT64)b)
+#define mod_64x32(a, b) (a - (b * div_64x32(a, b)))
+#define modu_64x32(a, b) (a - (b * divu_64x32(a, b)))
+#define recip_approx(value) (1.0f / value)
+
+#define atomic_add32(ptr, delta) ((*ptr += delta))
+#define atomic_increment32(ptr) (atomic_add32(ptr, 1))
+#define atomic_decrement32(ptr) (atomic_add32(ptr, -1))
+#define get_profile_ticks() (osd_ticks())
+
+#include "eminline.h"
+
 
 #endif /* __OSINLINE__ */

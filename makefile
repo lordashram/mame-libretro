@@ -24,8 +24,8 @@ BUILD_AND :=0
 endif
 
 OPTIMIZE=2
-CROSS_BUILD :=1 
-CROSSBUILD  :=1 
+#CROSS_BUILD :=1 
+#CROSSBUILD  :=1 
 TARGETOS=linux  
 SUBTARGET=mame
 OSD=retro
@@ -653,7 +653,7 @@ LIBMACHINE = $(OBJ)/$(TARGET)/$(SUBTARGET)/libmachine.a
 LIBUTIL = $(OBJ)/libutil.a
 LIBOCORE = $(OBJ)/libocore.a
 #LIBOSD = $(OBJ)/libosd.a
-LIBOSD = $(OBJ)/osd/retro/retromain.o $(OBJ)/osd/retro/libco/libco.o
+LIBOSD = $(OSDOBJS)
 VERSIONOBJ = $(OBJ)/version.o
 EMUINFOOBJ = $(OBJ)/$(TARGET)/$(TARGET).o
 DRIVLISTSRC = $(OBJ)/$(TARGET)/$(SUBTARGET)/drivlist.c
@@ -733,7 +733,7 @@ endif
 ifeq ($(BUILD_AND),0)
 
 CCOMFLAGS += -fPIC -fsigned-char -finline  -fno-common -fno-builtin -fweb -frename-registers -falign-functions=16 -fsingle-precision-constant
-PLATCFLAGS += -DPC_BUILD -DRETRO -DALIGN_INTS -DALIGN_SHORTS -DLSB_FIRST -fstrict-aliasing -fno-merge-constants 
+PLATCFLAGS += -DRETRO -DRETRO_UNIX -DALIGN_INTS -DALIGN_SHORTS -DLSB_FIRST -fstrict-aliasing -fno-merge-constants 
 LDFLAGS +=  -fPIC -shared -Wl,--version-script=src/osd/retro/link.T
 NATIVELD = g++
 NATIVELDFLAGS = -Wl,--warn-common -lstdc++
@@ -745,9 +745,8 @@ AR = @ar
 LD = g++ 
 CCOMFLAGS += $(PLATCFLAGS) -ffast-math  
 else
-
 CCOMFLAGS += -fPIC -mstructure-size-boundary=32 -mthumb-interwork -falign-functions=16 -fsigned-char -finline  -fno-common -fno-builtin -fweb -frename-registers -falign-functions=16 -fsingle-precision-constant
-PLATCFLAGS += -march=armv7-a -mfloat-abi=softfp -DRETRO -DRETRO_AND -DALIGN_INTS -DALIGN_SHORTS -DLSB_FIRST -fstrict-aliasing -fno-merge-constants -DSDLMAME_NO64BITIO -DANDTIME -DRANDPATH -DANDROID_BUILD
+PLATCFLAGS += -march=armv7-a -mfloat-abi=softfp -DRETRO -DRETRO_AND -DALIGN_INTS -DALIGN_SHORTS -DLSB_FIRST -fstrict-aliasing -fno-merge-constants
 LDFLAGS += -Wl,--fix-cortex-a8 -llog -fPIC -shared -Wl,--version-script=src/osd/retro/link.T
 NATIVELD = g++
 NATIVELDFLAGS = -Wl,--warn-common -lstdc++
@@ -758,7 +757,7 @@ CC = @arm-linux-androideabi-g++
 AR = @arm-linux-androideabi-ar
 LD = @arm-linux-androideabi-g++ 
 CCOMFLAGS += $(PLATCFLAGS) -ffast-math  
-
+DEFS += "-DDISABLE_MIDI=1"
 endif
 
 #-------------------------------------------------
@@ -831,7 +830,7 @@ maketree: $(sort $(OBJDIRS))
 
 clean: $(OSDCLEAN)
 	@echo Deleting object tree $(OBJ)...
-	$(RM) -r $(OBJ)
+	$(RM) -r obj/*
 	@echo Deleting $(EMULATOR)...
 	$(RM) $(EMULATOR)
 	@echo Deleting $(TOOLS)...
@@ -841,6 +840,7 @@ clean: $(OSDCLEAN)
 	$(RM) depend_mess.mak
 	$(RM) depend_ume.mak
 	$(RM) prec-build/*
+	touch prec-build/dummy.txt
 ifdef MAP
 	@echo Deleting $(FULLNAME).map...
 	$(RM) $(FULLNAME).map
@@ -878,13 +878,17 @@ $(OBJ)/build/m68kmake:
 $(OBJ)/build/png2bdc:
 	cp -R prec-build/png2bdc $(OBJ)/build 
 
-$(OBJ)/build/tmsmake:
-	cp -R prec-build/tmsmake $(OBJ)/build 
+$(OBJ)/build/makedep:
+	cp -R prec-build/makedep $(OBJ)/build 
+
+$(OBJ)/build/makelist:
+	cp -R prec-build/makelist $(OBJ)/build 
 
 $(OBJ)/build/verinfo:
 	cp -R prec-build/verinfo $(OBJ)/build 
 
 endif
+
 
 
 #-------------------------------------------------

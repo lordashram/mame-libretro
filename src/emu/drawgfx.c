@@ -18,7 +18,11 @@
 ***************************************************************************/
 
 // if this line errors during compile, the size of NO_PRIORITY is wrong and I need to use something else
+#ifdef RETRO_AND
+UINT8 no_priority_size_is_wrong[/*2 * (sizeof(NO_PRIORITY) == 3) -*/ 1];
+#else
 UINT8 no_priority_size_is_wrong[2 * (sizeof(NO_PRIORITY) == 3) - 1];
+#endif
 
 bitmap_ind8 drawgfx_dummy_priority_bitmap;
 
