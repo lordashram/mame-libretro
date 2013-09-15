@@ -79,7 +79,7 @@ ifeq ($(platform), unix)
 	AR = @ar
 	LD = g++ 
 	CCOMFLAGS += $(PLATCFLAGS) -ffast-math  
-	LIBS += -lstdc++ -lpthread
+	LIBS += -lstdc++ -lpthread -lportmidi
 ifeq ($(firstword $(filter x86_64,$(UNAME))),x86_64)
 PTR64 = 1
 endif
@@ -237,7 +237,10 @@ endif
 else
    TARGETLIB := $(TARGET_NAME)_libretro.dll
 	TARGETOS = win32
-   CC = g++
+   CC ?= g++
+	LD ?= g++
+	NATIVELD ?= $(LD)
+	CC_AS ?= $(CC)
    SHARED := -shared -static-libgcc -static-libstdc++ -s -Wl,--version-script=src/osd/retro/link.T
    CFLAGS += -D__WIN32__ -D__WIN32_LIBRETRO__
 	EXE = .exe
@@ -346,7 +349,7 @@ OPTIMIZE = 3
 #-------------------------------------------------
 
 # utilities
-MD = -mkdir$(EXE)
+MD = -mkdir$(EXE_EXT)
 RM = @rm -f
 OBJDUMP = @objdump
 PYTHON = @python2
@@ -580,7 +583,7 @@ ifeq ($(BUILD_MIDILIB),1)
 INCPATH += -I$(SRC)/lib/portmidi
 MIDI_LIB = $(OBJ)/libportmidi.a
 else
-LIBS += -lportmidi
+#LIBS += -lportmidi
 MIDI_LIB =
 endif
 
@@ -593,7 +596,7 @@ default: maketree buildtools emulator
 
 all: default tools
 
-tests: maketree jedutil$(EXE) chdman$(EXE)
+tests: maketree jedutil$(EXE_EXT) chdman$(EXE_EXT)
 
 7Z_LIB = $(OBJ)/lib7z.a
 
