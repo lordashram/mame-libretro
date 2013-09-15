@@ -666,6 +666,7 @@ tests: $(REGTESTS)
 $(sort $(OBJDIRS)):
 	$(MD) -p $@
 
+ifeq ($(platform), android)
 $(OBJ)/build/file2str:
 	mkdir -p $(OBJ)/build
 	cp -R prec-build/file2str $(OBJ)/build 
@@ -684,6 +685,7 @@ $(OBJ)/build/makelist:
 
 $(OBJ)/build/verinfo:
 	cp -R prec-build/verinfo $(OBJ)/build 
+endif
 
 #-------------------------------------------------
 # executable targets and dependencies
