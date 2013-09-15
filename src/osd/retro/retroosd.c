@@ -115,7 +115,27 @@ void mini_osd_interface::update(bool skip_redraw)
 
       surfptr = (UINT8 *) videoBuffer;
 
-      software_renderer<UINT16, 3,2,3, 11,5,0>::draw_primitives(primlist, surfptr, minwidth, minheight, minwidth);
+      //  draw a series of primitives using a software rasterizer
+      for (const render_primitive *prim = primlist.first(); prim != NULL; prim = prim->next())
+      {
+         switch (prim->type)
+         {
+            case render_primitive::LINE:
+               draw_line(*prim, (PIXEL_TYPE*)surfptr, minwidth, minheight, minwidth);
+               break;
+
+            case render_primitive::QUAD:
+               if (!prim->texture.base)
+                  draw_rect(*prim, (PIXEL_TYPE*)surfptr, minwidth, minheight, minwidth);
+               else
+                  setup_and_draw_textured_quad(*prim, (PIXEL_TYPE*)surfptr, minwidth, minheight, minwidth);
+               break;
+
+            default:
+               throw emu_fatalerror("Unexpected render_primitive type");
+         }
+      }
+
       primlist.release_lock();
    } 
 	else

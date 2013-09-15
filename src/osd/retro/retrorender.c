@@ -43,138 +43,130 @@
 #include "video/rgbutil.h"
 #include "render.h"
 
+// internal structs
+struct quad_setup_data
+{
+   INT32           dudx, dvdx, dudy, dvdy;
+   INT32           startu, startv;
+   INT32           startx, starty;
+   INT32           endx, endy;
+};
+
+#define SRC_SHIFT_R  3
+#define SRC_SHIFT_G  2
+#define SRC_SHIFT_B  3
+
+#define DST_SHIFT_R 11
+#define DST_SHIFT_G 5
+#define DST_SHIFT_B 0
+
+#define PIXEL_TYPE UINT16
+
 // destination pixels are written based on the values of the template parameters
-#define dest_assemble_rgb(r, g, b) ((r << _DstShiftR) | (g << _DstShiftG) | (b << _DstShiftB))
-#define dest_rgb_to_pixel(r, g, b) (dest_assemble_rgb(r >> _SrcShiftR, g >> _SrcShiftG, b >> _SrcShiftB))
+#define dest_assemble_rgb(r, g, b) ((r << DST_SHIFT_R) | (g << DST_SHIFT_G) | (b << DST_SHIFT_B))
+#define dest_rgb_to_pixel(r, g, b) (dest_assemble_rgb(r >> SRC_SHIFT_R, g >> SRC_SHIFT_G, b >> SRC_SHIFT_B))
+
+// generic conversion with special optimization for destinations in the standard format
+#define source32_to_dest(pixel) (dest_assemble_rgb(source32_r(pixel), source32_g(pixel), source32_b(pixel)))
 
 // source 32-bit pixels are in MAME standardized format
-#define source32_r(pixel) ((pixel >> (16 + _SrcShiftR)) & (0xff >> _SrcShiftR))
-#define source32_g(pixel) ((pixel >> ( 8 + _SrcShiftG)) & (0xff >> _SrcShiftG))
-#define source32_b(pixel) ((pixel >> ( 0 + _SrcShiftB)) & (0xff >> _SrcShiftB))
+#define source32_r(pixel) ((pixel >> (16 + SRC_SHIFT_R)) & (0xff >> SRC_SHIFT_R))
+#define source32_g(pixel) ((pixel >> ( 8 + SRC_SHIFT_G)) & (0xff >> SRC_SHIFT_G))
+#define source32_b(pixel) ((pixel >> ( 0 + SRC_SHIFT_B)) & (0xff >> SRC_SHIFT_B))
 
 // destination pixel masks are based on the template parameters as well
-#define dest_r(pixel) ((pixel >> _DstShiftR) & (0xff >> _SrcShiftR))
-#define dest_g(pixel) ((pixel >> _DstShiftG) & (0xff >> _SrcShiftG))
-#define dest_b(pixel) ((pixel >> _DstShiftB) & (0xff >> _SrcShiftB))
+#define dest_r(pixel) ((pixel >> DST_SHIFT_R) & (0xff >> SRC_SHIFT_R))
+#define dest_g(pixel) ((pixel >> DST_SHIFT_G) & (0xff >> SRC_SHIFT_G))
+#define dest_b(pixel) ((pixel >> DST_SHIFT_B) & (0xff >> SRC_SHIFT_B))
 
-template<typename _PixelType, int _SrcShiftR, int _SrcShiftG, int _SrcShiftB, int _DstShiftR, int _DstShiftG, int _DstShiftB, bool _NoDestRead = false, bool _BilinearFilter = false>
-class software_renderer
+// internal helpers
+#define is_opaque(alpha) (alpha >= 1.0f)
+#define is_transparent(alpha) (alpha < 0.0001f)
+#define apply_intensity(intensity, color) (MAKE_RGB((RGB_RED(color) * intensity) >> 8, (RGB_GREEN(color) * intensity) >> 8, (RGB_BLUE(color) * intensity) >> 8))
+#define round_nearest(f) (floor(f + 0.5f))
+
+#define clamp16_shift8(x) (((INT32(x) < 0) ? 0 : (x > 65535 ? 255: x >> 8)))
+
+//-------------------------------------------------
+//  ycc_to_rgb - convert YCC to RGB; the YCC pixel
+//  contains Y in the LSB, Cb << 8, and Cr << 16
+//  This actually a YCbCr conversion,
+//  details my be found in chapter 6.4 ff of
+//  http://softwarecommunity.intel.com/isn/downloads/softwareproducts/pdfs/346495.pdf
+//  The document also contains the constants below as floats.
+//-------------------------------------------------
+
+static inline UINT32 ycc_to_rgb(UINT32 ycc)
 {
-private:
-	// internal structs
-	struct quad_setup_data
-	{
-		INT32           dudx, dvdx, dudy, dvdy;
-		INT32           startu, startv;
-		INT32           startx, starty;
-		INT32           endx, endy;
-	};
+   // original equations:
+   //
+   //  C = Y - 16
+   //  D = Cb - 128
+   //  E = Cr - 128
+   //
+   //  R = clip(( 298 * C           + 409 * E + 128) >> 8)
+   //  G = clip(( 298 * C - 100 * D - 208 * E + 128) >> 8)
+   //  B = clip(( 298 * C + 516 * D           + 128) >> 8)
+   //
+   //  R = clip(( 298 * (Y - 16)                    + 409 * (Cr - 128) + 128) >> 8)
+   //  G = clip(( 298 * (Y - 16) - 100 * (Cb - 128) - 208 * (Cr - 128) + 128) >> 8)
+   //  B = clip(( 298 * (Y - 16) + 516 * (Cb - 128)                    + 128) >> 8)
+   //
+   //  R = clip(( 298 * Y - 298 * 16                        + 409 * Cr - 409 * 128 + 128) >> 8)
+   //  G = clip(( 298 * Y - 298 * 16 - 100 * Cb + 100 * 128 - 208 * Cr + 208 * 128 + 128) >> 8)
+   //  B = clip(( 298 * Y - 298 * 16 + 516 * Cb - 516 * 128                        + 128) >> 8)
+   //
+   //  R = clip(( 298 * Y - 298 * 16                        + 409 * Cr - 409 * 128 + 128) >> 8)
+   //  G = clip(( 298 * Y - 298 * 16 - 100 * Cb + 100 * 128 - 208 * Cr + 208 * 128 + 128) >> 8)
+   //  B = clip(( 298 * Y - 298 * 16 + 516 * Cb - 516 * 128                        + 128) >> 8)
+   //
+   //  Now combine constants:
+   //
+   //  R = clip(( 298 * Y            + 409 * Cr - 56992) >> 8)
+   //  G = clip(( 298 * Y - 100 * Cb - 208 * Cr + 34784) >> 8)
+   //  B = clip(( 298 * Y + 516 * Cb            - 70688) >> 8)
+   //
+   //  Define common = 298 * y - 56992. This will save one addition
+   //
+   //  R = clip(( common            + 409 * Cr -     0) >> 8)
+   //  G = clip(( common - 100 * Cb - 208 * Cr + 91776) >> 8)
+   //  B = clip(( common + 516 * Cb            - 13696) >> 8)
+   //
 
-	// internal helpers
-	static inline bool is_opaque(float alpha) { return (alpha >= (1.0f)); }
-	static inline bool is_transparent(float alpha) { return (alpha < (0.0001f)); }
-	static inline rgb_t apply_intensity(int intensity, rgb_t color) { return MAKE_RGB((RGB_RED(color) * intensity) >> 8, (RGB_GREEN(color) * intensity) >> 8, (RGB_BLUE(color) * intensity) >> 8); }
-	static inline float round_nearest(float f) { return floor(f + 0.5f); }
+   UINT8 y = ycc;
+   UINT8 cb = ycc >> 8;
+   UINT8 cr = ycc >> 16;
 
+   UINT32 common = 298 * y - 56992;
+   UINT32 r = (common +            409 * cr);
+   UINT32 g = (common - 100 * cb - 208 * cr + 91776);
+   UINT32 b = (common + 516 * cb - 13696);
 
+   // Now clamp and shift back
+   return MAKE_RGB(clamp16_shift8(r), clamp16_shift8(g), clamp16_shift8(b));
+}
 
-	// generic conversion with special optimization for destinations in the standard format
-	static inline _PixelType source32_to_dest(rgb_t pixel)
-	{
-		if (_SrcShiftR == 0 && _SrcShiftG == 0 && _SrcShiftB == 0 && _DstShiftR == 16 && _DstShiftG == 8 && _DstShiftB == 0)
-			return pixel;
-		else
-			return dest_assemble_rgb(source32_r(pixel), source32_g(pixel), source32_b(pixel));
-	}
+//-------------------------------------------------
+//  get_texel_palette16 - return a texel from a
+//  palettized 16bpp source
+//-------------------------------------------------
 
+static inline UINT32 get_texel_palette16(const render_texinfo &texture, INT32 curu, INT32 curv)
+{
+   const UINT16 *texbase = reinterpret_cast<const UINT16 *>(texture.base) + (curv >> 16) * texture.rowpixels + (curu >> 16);
+   return texture.palette[texbase[0]];
+}
 
-	//-------------------------------------------------
-	//  ycc_to_rgb - convert YCC to RGB; the YCC pixel
-	//  contains Y in the LSB, Cb << 8, and Cr << 16
-	//  This actually a YCbCr conversion,
-	//  details my be found in chapter 6.4 ff of
-	//  http://softwarecommunity.intel.com/isn/downloads/softwareproducts/pdfs/346495.pdf
-	//  The document also contains the constants below as floats.
-	//-------------------------------------------------
+//-------------------------------------------------
+//  get_texel_palette16a - return a texel from a
+//  palettized 16bpp source with alpha
+//-------------------------------------------------
 
-	static inline UINT32 clamp16_shift8(UINT32 x)
-	{
-		return ((INT32(x) < 0) ? 0 : (x > 65535 ? 255: x >> 8));
-	}
-
-	static inline UINT32 ycc_to_rgb(UINT32 ycc)
-	{
-		// original equations:
-		//
-		//  C = Y - 16
-		//  D = Cb - 128
-		//  E = Cr - 128
-		//
-		//  R = clip(( 298 * C           + 409 * E + 128) >> 8)
-		//  G = clip(( 298 * C - 100 * D - 208 * E + 128) >> 8)
-		//  B = clip(( 298 * C + 516 * D           + 128) >> 8)
-		//
-		//  R = clip(( 298 * (Y - 16)                    + 409 * (Cr - 128) + 128) >> 8)
-		//  G = clip(( 298 * (Y - 16) - 100 * (Cb - 128) - 208 * (Cr - 128) + 128) >> 8)
-		//  B = clip(( 298 * (Y - 16) + 516 * (Cb - 128)                    + 128) >> 8)
-		//
-		//  R = clip(( 298 * Y - 298 * 16                        + 409 * Cr - 409 * 128 + 128) >> 8)
-		//  G = clip(( 298 * Y - 298 * 16 - 100 * Cb + 100 * 128 - 208 * Cr + 208 * 128 + 128) >> 8)
-		//  B = clip(( 298 * Y - 298 * 16 + 516 * Cb - 516 * 128                        + 128) >> 8)
-		//
-		//  R = clip(( 298 * Y - 298 * 16                        + 409 * Cr - 409 * 128 + 128) >> 8)
-		//  G = clip(( 298 * Y - 298 * 16 - 100 * Cb + 100 * 128 - 208 * Cr + 208 * 128 + 128) >> 8)
-		//  B = clip(( 298 * Y - 298 * 16 + 516 * Cb - 516 * 128                        + 128) >> 8)
-		//
-		//  Now combine constants:
-		//
-		//  R = clip(( 298 * Y            + 409 * Cr - 56992) >> 8)
-		//  G = clip(( 298 * Y - 100 * Cb - 208 * Cr + 34784) >> 8)
-		//  B = clip(( 298 * Y + 516 * Cb            - 70688) >> 8)
-		//
-		//  Define common = 298 * y - 56992. This will save one addition
-		//
-		//  R = clip(( common            + 409 * Cr -     0) >> 8)
-		//  G = clip(( common - 100 * Cb - 208 * Cr + 91776) >> 8)
-		//  B = clip(( common + 516 * Cb            - 13696) >> 8)
-		//
-
-		UINT8 y = ycc;
-		UINT8 cb = ycc >> 8;
-		UINT8 cr = ycc >> 16;
-
-		UINT32 common = 298 * y - 56992;
-		UINT32 r = (common +            409 * cr);
-		UINT32 g = (common - 100 * cb - 208 * cr + 91776);
-		UINT32 b = (common + 516 * cb - 13696);
-
-		// Now clamp and shift back
-		return MAKE_RGB(clamp16_shift8(r), clamp16_shift8(g), clamp16_shift8(b));
-	}
-
-
-	//-------------------------------------------------
-	//  get_texel_palette16 - return a texel from a
-	//  palettized 16bpp source
-	//-------------------------------------------------
-
-	static inline UINT32 get_texel_palette16(const render_texinfo &texture, INT32 curu, INT32 curv)
-   {
-      const UINT16 *texbase = reinterpret_cast<const UINT16 *>(texture.base) + (curv >> 16) * texture.rowpixels + (curu >> 16);
-      return texture.palette[texbase[0]];
-   }
-
-
-	//-------------------------------------------------
-	//  get_texel_palette16a - return a texel from a
-	//  palettized 16bpp source with alpha
-	//-------------------------------------------------
-
-	static inline UINT32 get_texel_palette16a(const render_texinfo &texture, INT32 curu, INT32 curv)
-   {
-      const UINT16 *texbase = reinterpret_cast<const UINT16 *>(texture.base) + (curv >> 16) * texture.rowpixels + (curu >> 16);
-      return texture.palette[texbase[0]];
-   }
+static inline UINT32 get_texel_palette16a(const render_texinfo &texture, INT32 curu, INT32 curv)
+{
+   const UINT16 *texbase = reinterpret_cast<const UINT16 *>(texture.base) + (curv >> 16) * texture.rowpixels + (curu >> 16);
+   return texture.palette[texbase[0]];
+}
 
 
 	//-------------------------------------------------
@@ -217,16 +209,16 @@ private:
 	//  draw_aa_pixel - draw an antialiased pixel
 	//-------------------------------------------------
 
-	static inline void draw_aa_pixel(_PixelType *dstdata, UINT32 pitch, int x, int y, rgb_t col)
+	static inline void draw_aa_pixel(PIXEL_TYPE *dstdata, UINT32 pitch, int x, int y, rgb_t col)
 	{
-		_PixelType *dest = dstdata + y * pitch + x;
+		PIXEL_TYPE *dest = dstdata + y * pitch + x;
 		UINT32 dpix = *dest;
 		UINT32 dr = source32_r(col) + dest_r(dpix);
 		UINT32 dg = source32_g(col) + dest_g(dpix);
 		UINT32 db = source32_b(col) + dest_b(dpix);
-		dr = (dr | -(dr >> (8 - _SrcShiftR))) & (0xff >> _SrcShiftR);
-		dg = (dg | -(dg >> (8 - _SrcShiftG))) & (0xff >> _SrcShiftG);
-		db = (db | -(db >> (8 - _SrcShiftB))) & (0xff >> _SrcShiftB);
+		dr = (dr | -(dr >> (8 - SRC_SHIFT_R))) & (0xff >> SRC_SHIFT_R);
+		dg = (dg | -(dg >> (8 - SRC_SHIFT_G))) & (0xff >> SRC_SHIFT_G);
+		db = (db | -(db >> (8 - SRC_SHIFT_B))) & (0xff >> SRC_SHIFT_B);
 		*dest = dest_assemble_rgb(dr, dg, db);
 	}
 
@@ -235,7 +227,7 @@ private:
 	//  draw_line - draw a line or point
 	//-------------------------------------------------
 
-	static void draw_line(const render_primitive &prim, _PixelType *dstdata, INT32 width, INT32 height, UINT32 pitch)
+	static void draw_line(const render_primitive &prim, PIXEL_TYPE *dstdata, INT32 width, INT32 height, UINT32 pitch)
 	{
 		// internal tables
 		static UINT32 s_cosine_table[2049];
@@ -396,7 +388,7 @@ private:
 	//  draw_rect - draw a solid rectangle
 	//-------------------------------------------------
 
-	static void draw_rect(const render_primitive &prim, _PixelType *dstdata, INT32 width, INT32 height, UINT32 pitch)
+	static void draw_rect(const render_primitive &prim, PIXEL_TYPE *dstdata, INT32 width, INT32 height, UINT32 pitch)
 	{
 		render_bounds fpos = prim.bounds;
 		assert(fpos.x0 <= fpos.x1);
@@ -443,7 +435,7 @@ private:
 			// loop over rows
 			for (INT32 y = starty; y < endy; y++)
 			{
-				_PixelType *dest = dstdata + y * pitch + startx;
+				PIXEL_TYPE *dest = dstdata + y * pitch + startx;
 
 				// loop over cols
 				for (INT32 x = startx; x < endx; x++)
@@ -476,7 +468,7 @@ private:
 			// loop over rows
 			for (INT32 y = starty; y < endy; y++)
 			{
-				_PixelType *dest = dstdata + y * pitch + startx;
+				PIXEL_TYPE *dest = dstdata + y * pitch + startx;
 
 				// loop over cols
 				for (INT32 x = startx; x < endx; x++)
@@ -501,7 +493,7 @@ private:
 	//  rasterization of a 16bpp palettized texture
 	//-------------------------------------------------
 
-	static void draw_quad_palette16_none(const render_primitive &prim, _PixelType *dstdata, UINT32 pitch, quad_setup_data &setup)
+	static void draw_quad_palette16_none(const render_primitive &prim, PIXEL_TYPE *dstdata, UINT32 pitch, quad_setup_data &setup)
 	{
 		INT32 dudx = setup.dudx;
 		INT32 dvdx = setup.dvdx;
@@ -516,7 +508,7 @@ private:
 			// loop over rows
 			for (INT32 y = setup.starty; y < setup.endy; y++)
 			{
-				_PixelType *dest = dstdata + y * pitch + setup.startx;
+				PIXEL_TYPE *dest = dstdata + y * pitch + setup.startx;
 				INT32 curu = setup.startu + (y - setup.starty) * setup.dudy;
 				INT32 curv = setup.startv + (y - setup.starty) * setup.dvdy;
 
@@ -546,7 +538,7 @@ private:
 			// loop over rows
 			for (INT32 y = setup.starty; y < setup.endy; y++)
 			{
-				_PixelType *dest = dstdata + y * pitch + setup.startx;
+				PIXEL_TYPE *dest = dstdata + y * pitch + setup.startx;
 				INT32 curu = setup.startu + (y - setup.starty) * setup.dudy;
 				INT32 curv = setup.startv + (y - setup.starty) * setup.dvdy;
 
@@ -582,7 +574,7 @@ private:
 			// loop over rows
 			for (INT32 y = setup.starty; y < setup.endy; y++)
 			{
-				_PixelType *dest = dstdata + y * pitch + setup.startx;
+				PIXEL_TYPE *dest = dstdata + y * pitch + setup.startx;
 				INT32 curu = setup.startu + (y - setup.starty) * setup.dudy;
 				INT32 curv = setup.startv + (y - setup.starty) * setup.dvdy;
 
@@ -609,7 +601,7 @@ private:
 	//  rasterization of a 16bpp palettized texture
 	//-------------------------------------------------
 
-	static void draw_quad_palette16_add(const render_primitive &prim, _PixelType *dstdata, UINT32 pitch, quad_setup_data &setup)
+	static void draw_quad_palette16_add(const render_primitive &prim, PIXEL_TYPE *dstdata, UINT32 pitch, quad_setup_data &setup)
 	{
 		INT32 dudx = setup.dudx;
 		INT32 dvdx = setup.dvdx;
@@ -624,7 +616,7 @@ private:
 			// loop over rows
 			for (INT32 y = setup.starty; y < setup.endy; y++)
 			{
-				_PixelType *dest = dstdata + y * pitch + setup.startx;
+				PIXEL_TYPE *dest = dstdata + y * pitch + setup.startx;
 				INT32 curu = setup.startu + (y - setup.starty) * setup.dudy;
 				INT32 curv = setup.startv + (y - setup.starty) * setup.dvdy;
 
@@ -638,9 +630,9 @@ private:
 						UINT32 r = source32_r(pix) + dest_r(dpix);
 						UINT32 g = source32_g(pix) + dest_g(dpix);
 						UINT32 b = source32_b(pix) + dest_b(dpix);
-						r = (r | -(r >> (8 - _SrcShiftR))) & (0xff >> _SrcShiftR);
-						g = (g | -(g >> (8 - _SrcShiftG))) & (0xff >> _SrcShiftG);
-						b = (b | -(b >> (8 - _SrcShiftB))) & (0xff >> _SrcShiftB);
+						r = (r | -(r >> (8 - SRC_SHIFT_R))) & (0xff >> SRC_SHIFT_R);
+						g = (g | -(g >> (8 - SRC_SHIFT_G))) & (0xff >> SRC_SHIFT_G);
+						b = (b | -(b >> (8 - SRC_SHIFT_B))) & (0xff >> SRC_SHIFT_B);
 						*dest = dest_assemble_rgb(r, g, b);
 					}
 					dest++;
@@ -665,7 +657,7 @@ private:
 			// loop over rows
 			for (INT32 y = setup.starty; y < setup.endy; y++)
 			{
-				_PixelType *dest = dstdata + y * pitch + setup.startx;
+				PIXEL_TYPE *dest = dstdata + y * pitch + setup.startx;
 				INT32 curu = setup.startu + (y - setup.starty) * setup.dudy;
 				INT32 curv = setup.startv + (y - setup.starty) * setup.dvdy;
 
@@ -679,9 +671,9 @@ private:
 						UINT32 r = ((source32_r(pix) * sr) >> 8) + dest_r(dpix);
 						UINT32 g = ((source32_g(pix) * sg) >> 8) + dest_g(dpix);
 						UINT32 b = ((source32_b(pix) * sb) >> 8) + dest_b(dpix);
-						r = (r | -(r >> (8 - _SrcShiftR))) & (0xff >> _SrcShiftR);
-						g = (g | -(g >> (8 - _SrcShiftG))) & (0xff >> _SrcShiftG);
-						b = (b | -(b >> (8 - _SrcShiftB))) & (0xff >> _SrcShiftB);
+						r = (r | -(r >> (8 - SRC_SHIFT_R))) & (0xff >> SRC_SHIFT_R);
+						g = (g | -(g >> (8 - SRC_SHIFT_G))) & (0xff >> SRC_SHIFT_G);
+						b = (b | -(b >> (8 - SRC_SHIFT_B))) & (0xff >> SRC_SHIFT_B);
 						*dest++ = dest_assemble_rgb(r, g, b);
 						curu += dudx;
 						curv += dvdx;
@@ -702,7 +694,7 @@ private:
 	//  rasterization using standard alpha blending
 	//-------------------------------------------------
 
-	static void draw_quad_palettea16_alpha(const render_primitive &prim, _PixelType *dstdata, UINT32 pitch, quad_setup_data &setup)
+	static void draw_quad_palettea16_alpha(const render_primitive &prim, PIXEL_TYPE *dstdata, UINT32 pitch, quad_setup_data &setup)
 	{
 		INT32 dudx = setup.dudx;
 		INT32 dvdx = setup.dvdx;
@@ -717,7 +709,7 @@ private:
 			// loop over rows
 			for (INT32 y = setup.starty; y < setup.endy; y++)
 			{
-				_PixelType *dest = dstdata + y * pitch + setup.startx;
+				PIXEL_TYPE *dest = dstdata + y * pitch + setup.startx;
 				INT32 curu = setup.startu + (y - setup.starty) * setup.dudy;
 				INT32 curv = setup.startv + (y - setup.starty) * setup.dvdy;
 
@@ -760,7 +752,7 @@ private:
 			// loop over rows
 			for (INT32 y = setup.starty; y < setup.endy; y++)
 			{
-				_PixelType *dest = dstdata + y * pitch + setup.startx;
+				PIXEL_TYPE *dest = dstdata + y * pitch + setup.startx;
 				INT32 curu = setup.startu + (y - setup.starty) * setup.dudy;
 				INT32 curv = setup.startv + (y - setup.starty) * setup.dvdy;
 
@@ -798,7 +790,7 @@ private:
 	//  rasterization of a 16bpp YUY image
 	//-------------------------------------------------
 
-	static void draw_quad_yuy16_none(const render_primitive &prim, _PixelType *dstdata, UINT32 pitch, quad_setup_data &setup)
+	static void draw_quad_yuy16_none(const render_primitive &prim, PIXEL_TYPE *dstdata, UINT32 pitch, quad_setup_data &setup)
 	{
 		const rgb_t *palbase = prim.texture.palette;
 		INT32 dudx = setup.dudx;
@@ -811,7 +803,7 @@ private:
 			// loop over rows
 			for (INT32 y = setup.starty; y < setup.endy; y++)
 			{
-				_PixelType *dest = dstdata + y * pitch + setup.startx;
+				PIXEL_TYPE *dest = dstdata + y * pitch + setup.startx;
 				INT32 curu = setup.startu + (y - setup.starty) * setup.dudy;
 				INT32 curv = setup.startv + (y - setup.starty) * setup.dvdy;
 
@@ -858,7 +850,7 @@ private:
 			// loop over rows
 			for (INT32 y = setup.starty; y < setup.endy; y++)
 			{
-				_PixelType *dest = dstdata + y * pitch + setup.startx;
+				PIXEL_TYPE *dest = dstdata + y * pitch + setup.startx;
 				INT32 curu = setup.startu + (y - setup.starty) * setup.dudy;
 				INT32 curv = setup.startv + (y - setup.starty) * setup.dvdy;
 
@@ -915,7 +907,7 @@ private:
 			// loop over rows
 			for (INT32 y = setup.starty; y < setup.endy; y++)
 			{
-				_PixelType *dest = dstdata + y * pitch + setup.startx;
+				PIXEL_TYPE *dest = dstdata + y * pitch + setup.startx;
 				INT32 curu = setup.startu + (y - setup.starty) * setup.dudy;
 				INT32 curv = setup.startv + (y - setup.starty) * setup.dvdy;
 
@@ -968,7 +960,7 @@ private:
 	//  a 32bpp RGB texture
 	//-------------------------------------------------
 
-	static void draw_quad_rgb32(const render_primitive &prim, _PixelType *dstdata, UINT32 pitch, quad_setup_data &setup)
+	static void draw_quad_rgb32(const render_primitive &prim, PIXEL_TYPE *dstdata, UINT32 pitch, quad_setup_data &setup)
 	{
 		const rgb_t *palbase = prim.texture.palette;
 		INT32 dudx = setup.dudx;
@@ -981,7 +973,7 @@ private:
 			// loop over rows
 			for (INT32 y = setup.starty; y < setup.endy; y++)
 			{
-				_PixelType *dest = dstdata + y * pitch + setup.startx;
+				PIXEL_TYPE *dest = dstdata + y * pitch + setup.startx;
 				INT32 curu = setup.startu + (y - setup.starty) * setup.dudy;
 				INT32 curv = setup.startv + (y - setup.starty) * setup.dvdy;
 
@@ -1005,9 +997,9 @@ private:
 					for (INT32 x = setup.startx; x < endx; x++)
 					{
 						UINT32 pix = get_texel_rgb32(prim.texture, curu, curv);
-						UINT32 r = palbase[(pix >> 16) & 0xff] >> _SrcShiftR;
-						UINT32 g = palbase[(pix >> 8) & 0xff] >> _SrcShiftG;
-						UINT32 b = palbase[(pix >> 0) & 0xff] >> _SrcShiftB;
+						UINT32 r = palbase[(pix >> 16) & 0xff] >> SRC_SHIFT_R;
+						UINT32 g = palbase[(pix >> 8) & 0xff] >> SRC_SHIFT_G;
+						UINT32 b = palbase[(pix >> 0) & 0xff] >> SRC_SHIFT_B;
 
 						*dest++ = dest_assemble_rgb(r, g, b);
 						curu += dudx;
@@ -1032,7 +1024,7 @@ private:
 			// loop over rows
 			for (INT32 y = setup.starty; y < setup.endy; y++)
 			{
-				_PixelType *dest = dstdata + y * pitch + setup.startx;
+				PIXEL_TYPE *dest = dstdata + y * pitch + setup.startx;
 				INT32 curu = setup.startu + (y - setup.starty) * setup.dudy;
 				INT32 curv = setup.startv + (y - setup.starty) * setup.dvdy;
 
@@ -1060,9 +1052,9 @@ private:
 					for (INT32 x = setup.startx; x < endx; x++)
 					{
 						UINT32 pix = get_texel_rgb32(prim.texture, curu, curv);
-						UINT32 r = (palbase[(pix >> 16) & 0xff] * sr) >> (8 + _SrcShiftR);
-						UINT32 g = (palbase[(pix >> 8) & 0xff] * sg) >> (8 + _SrcShiftG);
-						UINT32 b = (palbase[(pix >> 0) & 0xff] * sb) >> (8 + _SrcShiftB);
+						UINT32 r = (palbase[(pix >> 16) & 0xff] * sr) >> (8 + SRC_SHIFT_R);
+						UINT32 g = (palbase[(pix >> 8) & 0xff] * sg) >> (8 + SRC_SHIFT_G);
+						UINT32 b = (palbase[(pix >> 0) & 0xff] * sb) >> (8 + SRC_SHIFT_B);
 
 						*dest++ = dest_assemble_rgb(r, g, b);
 						curu += dudx;
@@ -1089,7 +1081,7 @@ private:
 			// loop over rows
 			for (INT32 y = setup.starty; y < setup.endy; y++)
 			{
-				_PixelType *dest = dstdata + y * pitch + setup.startx;
+				PIXEL_TYPE *dest = dstdata + y * pitch + setup.startx;
 				INT32 curu = setup.startu + (y - setup.starty) * setup.dudy;
 				INT32 curv = setup.startv + (y - setup.starty) * setup.dvdy;
 
@@ -1119,9 +1111,9 @@ private:
 					{
 						UINT32 pix = get_texel_rgb32(prim.texture, curu, curv);
 						UINT32 dpix = *dest;
-						UINT32 r = ((palbase[(pix >> 16) & 0xff] >> _SrcShiftR) * sr + dest_r(dpix) * invsa) >> 8;
-						UINT32 g = ((palbase[(pix >> 8) & 0xff] >> _SrcShiftG) * sg + dest_g(dpix) * invsa) >> 8;
-						UINT32 b = ((palbase[(pix >> 0) & 0xff] >> _SrcShiftB) * sb + dest_b(dpix) * invsa) >> 8;
+						UINT32 r = ((palbase[(pix >> 16) & 0xff] >> SRC_SHIFT_R) * sr + dest_r(dpix) * invsa) >> 8;
+						UINT32 g = ((palbase[(pix >> 8) & 0xff] >> SRC_SHIFT_G) * sg + dest_g(dpix) * invsa) >> 8;
+						UINT32 b = ((palbase[(pix >> 0) & 0xff] >> SRC_SHIFT_B) * sb + dest_b(dpix) * invsa) >> 8;
 
 						*dest++ = dest_assemble_rgb(r, g, b);
 						curu += dudx;
@@ -1138,7 +1130,7 @@ private:
 	//  rasterization by using RGB add
 	//-------------------------------------------------
 
-	static void draw_quad_rgb32_add(const render_primitive &prim, _PixelType *dstdata, UINT32 pitch, quad_setup_data &setup)
+	static void draw_quad_rgb32_add(const render_primitive &prim, PIXEL_TYPE *dstdata, UINT32 pitch, quad_setup_data &setup)
 	{
 		const rgb_t *palbase = prim.texture.palette;
 		INT32 dudx = setup.dudx;
@@ -1151,7 +1143,7 @@ private:
 			// loop over rows
 			for (INT32 y = setup.starty; y < setup.endy; y++)
 			{
-				_PixelType *dest = dstdata + y * pitch + setup.startx;
+				PIXEL_TYPE *dest = dstdata + y * pitch + setup.startx;
 				INT32 curu = setup.startu + (y - setup.starty) * setup.dudy;
 				INT32 curv = setup.startv + (y - setup.starty) * setup.dvdy;
 
@@ -1166,9 +1158,9 @@ private:
 						UINT32 r = source32_r(pix) + dest_r(dpix);
 						UINT32 g = source32_g(pix) + dest_g(dpix);
 						UINT32 b = source32_b(pix) + dest_b(dpix);
-						r = (r | -(r >> (8 - _SrcShiftR))) & (0xff >> _SrcShiftR);
-						g = (g | -(g >> (8 - _SrcShiftG))) & (0xff >> _SrcShiftG);
-						b = (b | -(b >> (8 - _SrcShiftB))) & (0xff >> _SrcShiftB);
+						r = (r | -(r >> (8 - SRC_SHIFT_R))) & (0xff >> SRC_SHIFT_R);
+						g = (g | -(g >> (8 - SRC_SHIFT_G))) & (0xff >> SRC_SHIFT_G);
+						b = (b | -(b >> (8 - SRC_SHIFT_B))) & (0xff >> SRC_SHIFT_B);
 						*dest++ = dest_assemble_rgb(r, g, b);
 						curu += dudx;
 						curv += dvdx;
@@ -1183,12 +1175,12 @@ private:
 					{
 						UINT32 pix = get_texel_argb32(prim.texture, curu, curv);
 						UINT32 dpix = *dest;
-						UINT32 r = (palbase[(pix >> 16) & 0xff] >> _SrcShiftR) + dest_r(dpix);
-						UINT32 g = (palbase[(pix >> 8) & 0xff] >> _SrcShiftG) + dest_g(dpix);
-						UINT32 b = (palbase[(pix >> 0) & 0xff] >> _SrcShiftB) + dest_b(dpix);
-						r = (r | -(r >> (8 - _SrcShiftR))) & (0xff >> _SrcShiftR);
-						g = (g | -(g >> (8 - _SrcShiftG))) & (0xff >> _SrcShiftG);
-						b = (b | -(b >> (8 - _SrcShiftB))) & (0xff >> _SrcShiftB);
+						UINT32 r = (palbase[(pix >> 16) & 0xff] >> SRC_SHIFT_R) + dest_r(dpix);
+						UINT32 g = (palbase[(pix >> 8) & 0xff] >> SRC_SHIFT_G) + dest_g(dpix);
+						UINT32 b = (palbase[(pix >> 0) & 0xff] >> SRC_SHIFT_B) + dest_b(dpix);
+						r = (r | -(r >> (8 - SRC_SHIFT_R))) & (0xff >> SRC_SHIFT_R);
+						g = (g | -(g >> (8 - SRC_SHIFT_G))) & (0xff >> SRC_SHIFT_G);
+						b = (b | -(b >> (8 - SRC_SHIFT_B))) & (0xff >> SRC_SHIFT_B);
 						*dest++ = dest_assemble_rgb(r, g, b);
 						curu += dudx;
 						curv += dvdx;
@@ -1214,7 +1206,7 @@ private:
 			// loop over rows
 			for (INT32 y = setup.starty; y < setup.endy; y++)
 			{
-				_PixelType *dest = dstdata + y * pitch + setup.startx;
+				PIXEL_TYPE *dest = dstdata + y * pitch + setup.startx;
 				INT32 curu = setup.startu + (y - setup.starty) * setup.dudy;
 				INT32 curv = setup.startv + (y - setup.starty) * setup.dvdy;
 
@@ -1229,9 +1221,9 @@ private:
 						UINT32 r = ((source32_r(pix) * sr * sa) >> 16) + dest_r(dpix);
 						UINT32 g = ((source32_g(pix) * sg * sa) >> 16) + dest_g(dpix);
 						UINT32 b = ((source32_b(pix) * sb * sa) >> 16) + dest_b(dpix);
-						r = (r | -(r >> (8 - _SrcShiftR))) & (0xff >> _SrcShiftR);
-						g = (g | -(g >> (8 - _SrcShiftG))) & (0xff >> _SrcShiftG);
-						b = (b | -(b >> (8 - _SrcShiftB))) & (0xff >> _SrcShiftB);
+						r = (r | -(r >> (8 - SRC_SHIFT_R))) & (0xff >> SRC_SHIFT_R);
+						g = (g | -(g >> (8 - SRC_SHIFT_G))) & (0xff >> SRC_SHIFT_G);
+						b = (b | -(b >> (8 - SRC_SHIFT_B))) & (0xff >> SRC_SHIFT_B);
 						*dest++ = dest_assemble_rgb(r, g, b);
 						curu += dudx;
 						curv += dvdx;
@@ -1246,12 +1238,12 @@ private:
 					{
 						UINT32 pix = get_texel_argb32(prim.texture, curu, curv);
 						UINT32 dpix = *dest;
-						UINT32 r = ((palbase[(pix >> 16) & 0xff] * sr * sa) >> (16 + _SrcShiftR)) + dest_r(dpix);
-						UINT32 g = ((palbase[(pix >> 8) & 0xff] * sr * sa) >> (16 + _SrcShiftR)) + dest_g(dpix);
-						UINT32 b = ((palbase[(pix >> 0) & 0xff] * sr * sa) >> (16 + _SrcShiftR)) + dest_b(dpix);
-						r = (r | -(r >> (8 - _SrcShiftR))) & (0xff >> _SrcShiftR);
-						g = (g | -(g >> (8 - _SrcShiftG))) & (0xff >> _SrcShiftG);
-						b = (b | -(b >> (8 - _SrcShiftB))) & (0xff >> _SrcShiftB);
+						UINT32 r = ((palbase[(pix >> 16) & 0xff] * sr * sa) >> (16 + SRC_SHIFT_R)) + dest_r(dpix);
+						UINT32 g = ((palbase[(pix >> 8) & 0xff] * sr * sa) >> (16 + SRC_SHIFT_R)) + dest_g(dpix);
+						UINT32 b = ((palbase[(pix >> 0) & 0xff] * sr * sa) >> (16 + SRC_SHIFT_R)) + dest_b(dpix);
+						r = (r | -(r >> (8 - SRC_SHIFT_R))) & (0xff >> SRC_SHIFT_R);
+						g = (g | -(g >> (8 - SRC_SHIFT_G))) & (0xff >> SRC_SHIFT_G);
+						b = (b | -(b >> (8 - SRC_SHIFT_B))) & (0xff >> SRC_SHIFT_B);
 						*dest++ = dest_assemble_rgb(r, g, b);
 						curu += dudx;
 						curv += dvdx;
@@ -1272,7 +1264,7 @@ private:
 	//  rasterization using standard alpha blending
 	//-------------------------------------------------
 
-	static void draw_quad_argb32_alpha(const render_primitive &prim, _PixelType *dstdata, UINT32 pitch, quad_setup_data &setup)
+	static void draw_quad_argb32_alpha(const render_primitive &prim, PIXEL_TYPE *dstdata, UINT32 pitch, quad_setup_data &setup)
 	{
 		const rgb_t *palbase = prim.texture.palette;
 		INT32 dudx = setup.dudx;
@@ -1285,7 +1277,7 @@ private:
 			// loop over rows
 			for (INT32 y = setup.starty; y < setup.endy; y++)
 			{
-				_PixelType *dest = dstdata + y * pitch + setup.startx;
+				PIXEL_TYPE *dest = dstdata + y * pitch + setup.startx;
 				INT32 curu = setup.startu + (y - setup.starty) * setup.dudy;
 				INT32 curv = setup.startv + (y - setup.starty) * setup.dvdy;
 
@@ -1325,9 +1317,9 @@ private:
 						{
 							UINT32 dpix = *dest;
 							UINT32 invta = 0x100 - ta;
-							UINT32 r = ((palbase[(pix >> 16) & 0xff] >> _SrcShiftR) * ta + dest_r(dpix) * invta) >> 8;
-							UINT32 g = ((palbase[(pix >> 8) & 0xff] >> _SrcShiftG) * ta + dest_g(dpix) * invta) >> 8;
-							UINT32 b = ((palbase[(pix >> 0) & 0xff] >> _SrcShiftB) * ta + dest_b(dpix) * invta) >> 8;
+							UINT32 r = ((palbase[(pix >> 16) & 0xff] >> SRC_SHIFT_R) * ta + dest_r(dpix) * invta) >> 8;
+							UINT32 g = ((palbase[(pix >> 8) & 0xff] >> SRC_SHIFT_G) * ta + dest_g(dpix) * invta) >> 8;
+							UINT32 b = ((palbase[(pix >> 0) & 0xff] >> SRC_SHIFT_B) * ta + dest_b(dpix) * invta) >> 8;
 
 							*dest = dest_assemble_rgb(r, g, b);
 						}
@@ -1356,7 +1348,7 @@ private:
 			// loop over rows
 			for (INT32 y = setup.starty; y < setup.endy; y++)
 			{
-				_PixelType *dest = dstdata + y * pitch + setup.startx;
+				PIXEL_TYPE *dest = dstdata + y * pitch + setup.startx;
 				INT32 curu = setup.startu + (y - setup.starty) * setup.dudy;
 				INT32 curv = setup.startv + (y - setup.starty) * setup.dvdy;
 
@@ -1397,9 +1389,9 @@ private:
 						{
 							UINT32 dpix = *dest;
 							UINT32 invsta = (0x10000 - ta) << 8;
-							UINT32 r = ((palbase[(pix >> 16) & 0xff] >> _SrcShiftR) * sr * ta + dest_r(dpix) * invsta) >> 24;
-							UINT32 g = ((palbase[(pix >> 8) & 0xff] >> _SrcShiftG) * sg * ta + dest_g(dpix) * invsta) >> 24;
-							UINT32 b = ((palbase[(pix >> 0) & 0xff] >> _SrcShiftB) * sb * ta + dest_b(dpix) * invsta) >> 24;
+							UINT32 r = ((palbase[(pix >> 16) & 0xff] >> SRC_SHIFT_R) * sr * ta + dest_r(dpix) * invsta) >> 24;
+							UINT32 g = ((palbase[(pix >> 8) & 0xff] >> SRC_SHIFT_G) * sg * ta + dest_g(dpix) * invsta) >> 24;
+							UINT32 b = ((palbase[(pix >> 0) & 0xff] >> SRC_SHIFT_B) * sb * ta + dest_b(dpix) * invsta) >> 24;
 
 							*dest = dest_assemble_rgb(r, g, b);
 						}
@@ -1418,7 +1410,7 @@ private:
 	//  rasterization using RGB multiply
 	//-------------------------------------------------
 
-	static void draw_quad_argb32_multiply(const render_primitive &prim, _PixelType *dstdata, UINT32 pitch, quad_setup_data &setup)
+	static void draw_quad_argb32_multiply(const render_primitive &prim, PIXEL_TYPE *dstdata, UINT32 pitch, quad_setup_data &setup)
 	{
 		const rgb_t *palbase = prim.texture.palette;
 		INT32 dudx = setup.dudx;
@@ -1431,7 +1423,7 @@ private:
 			// loop over rows
 			for (INT32 y = setup.starty; y < setup.endy; y++)
 			{
-				_PixelType *dest = dstdata + y * pitch + setup.startx;
+				PIXEL_TYPE *dest = dstdata + y * pitch + setup.startx;
 				INT32 curu = setup.startu + (y - setup.starty) * setup.dudy;
 				INT32 curv = setup.startv + (y - setup.starty) * setup.dvdy;
 
@@ -1443,9 +1435,9 @@ private:
 					{
 						UINT32 pix = get_texel_argb32(prim.texture, curu, curv);
 						UINT32 dpix = *dest;
-						UINT32 r = (source32_r(pix) * dest_r(dpix)) >> (8 - _SrcShiftR);
-						UINT32 g = (source32_g(pix) * dest_g(dpix)) >> (8 - _SrcShiftG);
-						UINT32 b = (source32_b(pix) * dest_b(dpix)) >> (8 - _SrcShiftB);
+						UINT32 r = (source32_r(pix) * dest_r(dpix)) >> (8 - SRC_SHIFT_R);
+						UINT32 g = (source32_g(pix) * dest_g(dpix)) >> (8 - SRC_SHIFT_G);
+						UINT32 b = (source32_b(pix) * dest_b(dpix)) >> (8 - SRC_SHIFT_B);
 
 						*dest++ = dest_assemble_rgb(r, g, b);
 						curu += dudx;
@@ -1486,7 +1478,7 @@ private:
 			// loop over rows
 			for (INT32 y = setup.starty; y < setup.endy; y++)
 			{
-				_PixelType *dest = dstdata + y * pitch + setup.startx;
+				PIXEL_TYPE *dest = dstdata + y * pitch + setup.startx;
 				INT32 curu = setup.startu + (y - setup.starty) * setup.dudy;
 				INT32 curv = setup.startv + (y - setup.starty) * setup.dvdy;
 
@@ -1498,9 +1490,9 @@ private:
 					{
 						UINT32 pix = get_texel_argb32(prim.texture, curu, curv);
 						UINT32 dpix = *dest;
-						UINT32 r = (source32_r(pix) * sr * dest_r(dpix)) >> (16 - _SrcShiftR);
-						UINT32 g = (source32_g(pix) * sg * dest_g(dpix)) >> (16 - _SrcShiftG);
-						UINT32 b = (source32_b(pix) * sb * dest_b(dpix)) >> (16 - _SrcShiftB);
+						UINT32 r = (source32_r(pix) * sr * dest_r(dpix)) >> (16 - SRC_SHIFT_R);
+						UINT32 g = (source32_g(pix) * sg * dest_g(dpix)) >> (16 - SRC_SHIFT_G);
+						UINT32 b = (source32_b(pix) * sb * dest_b(dpix)) >> (16 - SRC_SHIFT_B);
 
 						*dest++ = dest_assemble_rgb(r, g, b);
 						curu += dudx;
@@ -1533,7 +1525,7 @@ private:
 	//  rasterization by using RGB add
 	//-------------------------------------------------
 
-	static void draw_quad_argb32_add(const render_primitive &prim, _PixelType *dstdata, UINT32 pitch, quad_setup_data &setup)
+	static void draw_quad_argb32_add(const render_primitive &prim, PIXEL_TYPE *dstdata, UINT32 pitch, quad_setup_data &setup)
 	{
 		const rgb_t *palbase = prim.texture.palette;
 		INT32 dudx = setup.dudx;
@@ -1546,7 +1538,7 @@ private:
 			// loop over rows
 			for (INT32 y = setup.starty; y < setup.endy; y++)
 			{
-				_PixelType *dest = dstdata + y * pitch + setup.startx;
+				PIXEL_TYPE *dest = dstdata + y * pitch + setup.startx;
 				INT32 curu = setup.startu + (y - setup.starty) * setup.dudy;
 				INT32 curv = setup.startv + (y - setup.starty) * setup.dvdy;
 
@@ -1564,9 +1556,9 @@ private:
 							UINT32 r = ((source32_r(pix) * ta) >> 8) + dest_r(dpix);
 							UINT32 g = ((source32_g(pix) * ta) >> 8) + dest_g(dpix);
 							UINT32 b = ((source32_b(pix) * ta) >> 8) + dest_b(dpix);
-							r = (r | -(r >> (8 - _SrcShiftR))) & (0xff >> _SrcShiftR);
-							g = (g | -(g >> (8 - _SrcShiftG))) & (0xff >> _SrcShiftG);
-							b = (b | -(b >> (8 - _SrcShiftB))) & (0xff >> _SrcShiftB);
+							r = (r | -(r >> (8 - SRC_SHIFT_R))) & (0xff >> SRC_SHIFT_R);
+							g = (g | -(g >> (8 - SRC_SHIFT_G))) & (0xff >> SRC_SHIFT_G);
+							b = (b | -(b >> (8 - SRC_SHIFT_B))) & (0xff >> SRC_SHIFT_B);
 							*dest = dest_assemble_rgb(r, g, b);
 						}
 						dest++;
@@ -1586,12 +1578,12 @@ private:
 						if (ta != 0)
 						{
 							UINT32 dpix = *dest;
-							UINT32 r = ((palbase[(pix >> 16) & 0xff] * ta) >> (8 + _SrcShiftR)) + dest_r(dpix);
-							UINT32 g = ((palbase[(pix >> 8) & 0xff] * ta) >> (8 + _SrcShiftG)) + dest_g(dpix);
-							UINT32 b = ((palbase[(pix >> 0) & 0xff] * ta) >> (8 + _SrcShiftB)) + dest_b(dpix);
-							r = (r | -(r >> (8 - _SrcShiftR))) & (0xff >> _SrcShiftR);
-							g = (g | -(g >> (8 - _SrcShiftG))) & (0xff >> _SrcShiftG);
-							b = (b | -(b >> (8 - _SrcShiftB))) & (0xff >> _SrcShiftB);
+							UINT32 r = ((palbase[(pix >> 16) & 0xff] * ta) >> (8 + SRC_SHIFT_R)) + dest_r(dpix);
+							UINT32 g = ((palbase[(pix >> 8) & 0xff] * ta) >> (8 + SRC_SHIFT_G)) + dest_g(dpix);
+							UINT32 b = ((palbase[(pix >> 0) & 0xff] * ta) >> (8 + SRC_SHIFT_B)) + dest_b(dpix);
+							r = (r | -(r >> (8 - SRC_SHIFT_R))) & (0xff >> SRC_SHIFT_R);
+							g = (g | -(g >> (8 - SRC_SHIFT_G))) & (0xff >> SRC_SHIFT_G);
+							b = (b | -(b >> (8 - SRC_SHIFT_B))) & (0xff >> SRC_SHIFT_B);
 							*dest = dest_assemble_rgb(r, g, b);
 						}
 						dest++;
@@ -1619,7 +1611,7 @@ private:
 			// loop over rows
 			for (INT32 y = setup.starty; y < setup.endy; y++)
 			{
-				_PixelType *dest = dstdata + y * pitch + setup.startx;
+				PIXEL_TYPE *dest = dstdata + y * pitch + setup.startx;
 				INT32 curu = setup.startu + (y - setup.starty) * setup.dudy;
 				INT32 curv = setup.startv + (y - setup.starty) * setup.dvdy;
 
@@ -1637,9 +1629,9 @@ private:
 							UINT32 r = ((source32_r(pix) * sr * ta) >> 24) + dest_r(dpix);
 							UINT32 g = ((source32_g(pix) * sg * ta) >> 24) + dest_g(dpix);
 							UINT32 b = ((source32_b(pix) * sb * ta) >> 24) + dest_b(dpix);
-							r = (r | -(r >> (8 - _SrcShiftR))) & (0xff >> _SrcShiftR);
-							g = (g | -(g >> (8 - _SrcShiftG))) & (0xff >> _SrcShiftG);
-							b = (b | -(b >> (8 - _SrcShiftB))) & (0xff >> _SrcShiftB);
+							r = (r | -(r >> (8 - SRC_SHIFT_R))) & (0xff >> SRC_SHIFT_R);
+							g = (g | -(g >> (8 - SRC_SHIFT_G))) & (0xff >> SRC_SHIFT_G);
+							b = (b | -(b >> (8 - SRC_SHIFT_B))) & (0xff >> SRC_SHIFT_B);
 							*dest = dest_assemble_rgb(r, g, b);
 						}
 						dest++;
@@ -1659,12 +1651,12 @@ private:
 						if (ta != 0)
 						{
 							UINT32 dpix = *dest;
-							UINT32 r = ((palbase[(pix >> 16) & 0xff] * sr * ta) >> (24 + _SrcShiftR)) + dest_r(dpix);
-							UINT32 g = ((palbase[(pix >> 8) & 0xff] * sr * ta) >> (24 + _SrcShiftR)) + dest_g(dpix);
-							UINT32 b = ((palbase[(pix >> 0) & 0xff] * sr * ta) >> (24 + _SrcShiftR)) + dest_b(dpix);
-							r = (r | -(r >> (8 - _SrcShiftR))) & (0xff >> _SrcShiftR);
-							g = (g | -(g >> (8 - _SrcShiftG))) & (0xff >> _SrcShiftG);
-							b = (b | -(b >> (8 - _SrcShiftB))) & (0xff >> _SrcShiftB);
+							UINT32 r = ((palbase[(pix >> 16) & 0xff] * sr * ta) >> (24 + SRC_SHIFT_R)) + dest_r(dpix);
+							UINT32 g = ((palbase[(pix >> 8) & 0xff] * sr * ta) >> (24 + SRC_SHIFT_R)) + dest_g(dpix);
+							UINT32 b = ((palbase[(pix >> 0) & 0xff] * sr * ta) >> (24 + SRC_SHIFT_R)) + dest_b(dpix);
+							r = (r | -(r >> (8 - SRC_SHIFT_R))) & (0xff >> SRC_SHIFT_R);
+							g = (g | -(g >> (8 - SRC_SHIFT_G))) & (0xff >> SRC_SHIFT_G);
+							b = (b | -(b >> (8 - SRC_SHIFT_B))) & (0xff >> SRC_SHIFT_B);
 							*dest = dest_assemble_rgb(r, g, b);
 						}
 						dest++;
@@ -1687,7 +1679,7 @@ private:
 	//  drawing routine
 	//-------------------------------------------------
 
-	static void setup_and_draw_textured_quad(const render_primitive &prim, _PixelType *dstdata, INT32 width, INT32 height, UINT32 pitch)
+	static void setup_and_draw_textured_quad(const render_primitive &prim, PIXEL_TYPE *dstdata, INT32 width, INT32 height, UINT32 pitch)
 	{
 		assert(prim.bounds.x0 <= prim.bounds.x1);
 		assert(prim.bounds.y0 <= prim.bounds.y1);
@@ -1774,37 +1766,3 @@ private:
 				break;
 		}
 	}
-
-
-	//**************************************************************************
-	//  PRIMARY ENTRY POINT
-	//**************************************************************************
-
-	//-------------------------------------------------
-	//  draw_primitives - draw a series of primitives
-	//  using a software rasterizer
-	//-------------------------------------------------
-
-public:
-	static void draw_primitives(const render_primitive_list &primlist, void *dstdata, UINT32 width, UINT32 height, UINT32 pitch)
-	{
-		// loop over the list and render each element
-		for (const render_primitive *prim = primlist.first(); prim != NULL; prim = prim->next())
-			switch (prim->type)
-			{
-				case render_primitive::LINE:
-					draw_line(*prim, reinterpret_cast<_PixelType *>(dstdata), width, height, pitch);
-					break;
-
-				case render_primitive::QUAD:
-					if (!prim->texture.base)
-						draw_rect(*prim, reinterpret_cast<_PixelType *>(dstdata), width, height, pitch);
-					else
-						setup_and_draw_textured_quad(*prim, reinterpret_cast<_PixelType *>(dstdata), width, height, pitch);
-					break;
-
-				default:
-					throw emu_fatalerror("Unexpected render_primitive type");
-			}
-	}
-};
