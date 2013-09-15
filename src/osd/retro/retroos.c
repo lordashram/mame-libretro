@@ -1,14 +1,3 @@
-//============================================================
-//
-//  sdlos_*.c - OS specific low level code
-//
-//  Copyright (c) 1996-2010, Nicola Salmoria and the MAME Team.
-//  Visit http://mamedev.org for licensing and usage restrictions.
-//
-//  SDLMAME by Olivier Galibert and R. Belmont
-//
-//============================================================
-
 #include <stdlib.h>
 #include <unistd.h>
 #ifdef WIN32
@@ -360,13 +349,9 @@ file_error osd_get_full_path(char **dst, const char *path)
 
 		// if it's already a full path, just pass it through
 		if (path[0] == '/')
-		{
 			strcpy(*dst, path);
-		}
 		else
-		{
 			sprintf(*dst, "%s%s%s", path_buffer, PATH_SEPARATOR, path);
-		}
 	}
 
 	return err;

@@ -1,8 +1,3 @@
-//FIXME INDENT ME
-//============================================================
-//  keyboard_get_state
-//============================================================
-
 static INT32 pad1_get_state(void *device_internal, void *item_internal)
 {
 	UINT8 *itemdata = (UINT8 *)item_internal;

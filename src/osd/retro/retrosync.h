@@ -1,16 +1,5 @@
-//============================================================
-//
-//  sdlsync.h - SDL core synchronization functions
-//
-//  Copyright (c) 1996-2007, Nicola Salmoria and the MAME Team.
-//  Visit http://mamedev.org for licensing and usage restrictions.
-//
-//  SDLMAME by Olivier Galibert and R. Belmont
-//
-//============================================================
-
-#ifndef __SDLSYNC__
-#define __SDLSYNC__
+#ifndef __RETROSYNC__
+#define __RETROSYNC__
 
 /***************************************************************************
     SYNCHRONIZATION INTERFACES - Events
@@ -201,4 +190,4 @@ void osd_scalable_lock_release(osd_scalable_lock *lock, INT32 myslot);
 
 void osd_scalable_lock_free(osd_scalable_lock *lock);
 
-#endif  /* __SDLSYNC__ */
+#endif  /* __RETROSYNC__ */

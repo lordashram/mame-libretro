@@ -66,66 +66,58 @@ void mini_osd_interface::update(bool skip_redraw)
 		return;
 	}
 
-	if (FirstTimeUpdate == 1) {
+	if (FirstTimeUpdate == 1)
 		skip_redraw = 0; //force redraw to make sure the video texture is created
-	}
 
-	if (!skip_redraw) {
+   if (!skip_redraw)
+   {
 
-		draw_this_frame = true;
-		// get the minimum width/height for the current layout
-		int minwidth, minheight;
-		//render_target_get_minimum_size(our_target, &minwidth, &minheight);
-		our_target->compute_minimum_size(minwidth, minheight);
+      draw_this_frame = true;
+      // get the minimum width/height for the current layout
+      int minwidth, minheight;
+      our_target->compute_minimum_size(minwidth, minheight);
 
-		if (FirstTimeUpdate == 1) {
+      if (FirstTimeUpdate == 1) {
 
-			FirstTimeUpdate++;			
-			write_log("game screen w=%i h=%i  rowPixels=%i\n", minwidth, minheight,minwidth );
+         FirstTimeUpdate++;			
+         write_log("game screen w=%i h=%i  rowPixels=%i\n", minwidth, minheight,minwidth );
 
-			rtwi=minwidth;
-			rthe=minheight;
-			topw=minwidth;			
+         rtwi=minwidth;
+         rthe=minheight;
+         topw=minwidth;			
 
-			int gamRot=0;
-		        orient  = (machine().system().flags & ORIENTATION_MASK);
-			vertical = (machine().system().flags & ORIENTATION_SWAP_XY);
-        
-		        gamRot = (ROT270 == orient) ? 1 : gamRot;
-		        gamRot = (ROT180 == orient) ? 2 : gamRot;
-		        gamRot = (ROT90  == orient) ? 3 : gamRot;
-        
-			prep_retro_rotation(gamRot);
+         int gamRot=0;
+         orient  = (machine().system().flags & ORIENTATION_MASK);
+         vertical = (machine().system().flags & ORIENTATION_SWAP_XY);
 
-		}
+         gamRot = (ROT270 == orient) ? 1 : gamRot;
+         gamRot = (ROT180 == orient) ? 2 : gamRot;
+         gamRot = (ROT90  == orient) ? 3 : gamRot;
 
-		if (minwidth != rtwi || minheight != rthe ){
-			write_log("Res change: old(%d,%d) new(%d,%d) %d\n",rtwi,rthe,minwidth,minheight,topw);
-			rtwi=minwidth;
-			rthe=minheight;
-			topw=minwidth;
-		}
+         prep_retro_rotation(gamRot);
 
-		// make that the size of our target
-		our_target->set_bounds(rtwi,rthe);
-		// get the list of primitives for the target at the current size
-		render_primitive_list &primlist = our_target->get_primitives();
+      }
 
-		// lock them, and then render them
-		primlist.acquire_lock();
+      if (minwidth != rtwi || minheight != rthe ){
+         write_log("Res change: old(%d,%d) new(%d,%d) %d\n",rtwi,rthe,minwidth,minheight,topw);
+         rtwi=minwidth;
+         rthe=minheight;
+         topw=minwidth;
+      }
 
-		surfptr = (UINT8 *) videoBuffer;
+      // make that the size of our target
+      our_target->set_bounds(rtwi,rthe);
+      // get the list of primitives for the target at the current size
+      render_primitive_list &primlist = our_target->get_primitives();
 
-#ifdef M16B
-software_renderer<UINT16, 3,2,3, 11,5,0>::draw_primitives(primlist, surfptr, minwidth, minheight,minwidth ); 
-#else
-software_renderer<UINT16, 3,2,3, 11,5,0>::draw_primitives(primlist, surfptr, minwidth, minheight,minwidth ); 
-#endif
+      // lock them, and then render them
+      primlist.acquire_lock();
 
-		primlist.release_lock();
+      surfptr = (UINT8 *) videoBuffer;
 
-		//co_switch(mainThread);
-	} 
+      software_renderer<UINT16, 3,2,3, 11,5,0>::draw_primitives(primlist, surfptr, minwidth, minheight, minwidth);
+      primlist.release_lock();
+   } 
 	else
     		draw_this_frame = false;
 

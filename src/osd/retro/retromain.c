@@ -25,7 +25,7 @@ char g_rom_dir[1024];
 #define DSTSHIFT_G			8
 #define DSTSHIFT_B			0
 
-#include "rendersw.c"
+#include "retrorender.c"
 
 static void extract_basename(char *buf, const char *path, size_t size)
 {
@@ -320,7 +320,6 @@ int executeGame(char* path) {
 	return result;
 } 
  
-
 //============================================================
 //  main
 //============================================================
@@ -337,6 +336,3 @@ int mmain(int argc, const char *argv)
 	result = executeGame(gameName);
 	return 1;
 }
-
-
-

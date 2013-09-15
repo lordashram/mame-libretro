@@ -1,27 +1,4 @@
-//============================================================
-//
-//  sdlwork.c - SDL OSD core work item functions
-//
-//  Copyright (c) 1996-2010, Nicola Salmoria and the MAME Team.
-//  Visit http://mamedev.org for licensing and usage restrictions.
-//
-//  SDLMAME by Olivier Galibert and R. Belmont
-//
-//============================================================
 #include <unistd.h>
-#if 0
-
-/* must be exported
- * FIXME: NOASM should be taken care of in sdlsync.c
- *        This is not really a sound solution.
- */
-
-int osd_num_processors = 0;
-
-#include "../osdmini/miniwork.c"
-
-#else
-
 #include "osdcore.h"
 #include "osinline.h"
 
@@ -759,5 +736,3 @@ static void worker_thread_process(osd_work_queue *queue, work_thread_info *threa
 
 	end_timing(thread->runtime);
 }
-
-#endif // SDLMAME_NOASM

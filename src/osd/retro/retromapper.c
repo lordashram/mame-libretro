@@ -1,7 +1,3 @@
-//============================================================
-//  RETRO
-//============================================================
-
 void retro_poll_mame_input();
 
 static int rtwi=320,rthe=240,topw=1024; // DEFAULT TEXW/TEXH/PITCH
@@ -116,18 +112,16 @@ void retro_init (void){
 
 void retro_deinit(void)
 {
-	 if(emuThread){ 
+   if(emuThread)
+   { 
+      co_delete(emuThread);
+      emuThread = 0;
+   }
 
-        	co_delete(emuThread);
-        	emuThread = 0;
-    	 }
-
-	LOGI("Retro DeInit\n");
+   LOGI("Retro DeInit\n");
 }
 
-void retro_reset (void)
-{   
-}
+void retro_reset (void) {}
 
 void retro_run (void)
 {
@@ -141,31 +135,37 @@ void retro_run (void)
 	co_switch(emuThread);
 }
 
-void prep_retro_rotation(int rot){
-	LOGI("Rotation:%d\n",rot);
-        environ_cb(RETRO_ENVIRONMENT_SET_ROTATION, &rot);
+void prep_retro_rotation(int rot)
+{
+   LOGI("Rotation:%d\n",rot);
+   environ_cb(RETRO_ENVIRONMENT_SET_ROTATION, &rot);
 }
 
 static void keyboard_cb(bool down, unsigned keycode, uint32_t character, uint16_t mod)
 {
 #ifdef KEYDBG
-  	 printf( "Down: %s, Code: %d, Char: %u, Mod: %u. \n",
-  	       down ? "yes" : "no", keycode, character, mod);
+   printf( "Down: %s, Code: %d, Char: %u, Mod: %u. \n",
+         down ? "yes" : "no", keycode, character, mod);
 #endif
-	if (keycode>=320);
-	else{
-		if(down && keycode==RETROK_LSHIFT){			  	       
-			SHIFTON=-SHIFTON;					
-			if(SHIFTON == 1)retrokbd_state[keycode]=1;
-			else retrokbd_state[keycode]=0;	
-		}
-		else if(keycode!=RETROK_LSHIFT) {
-
-			if(down)retrokbd_state[keycode]=1;	
-			else if (!down)retrokbd_state[keycode]=0;
-		}
-	}
-
+   if (keycode>=320);
+   else
+   {
+      if(down && keycode==RETROK_LSHIFT)
+      {
+         SHIFTON=-SHIFTON;					
+         if(SHIFTON == 1)
+            retrokbd_state[keycode]=1;
+         else
+            retrokbd_state[keycode]=0;	
+      }
+      else if(keycode!=RETROK_LSHIFT)
+      {
+         if (down)
+            retrokbd_state[keycode]=1;	
+         else if (!down)
+            retrokbd_state[keycode]=0;
+      }
+   }
 }
 
 bool retro_load_game(const struct retro_game_info *info) 
@@ -188,7 +188,8 @@ bool retro_load_game(const struct retro_game_info *info)
 
 void retro_unload_game(void)
 {
-	if(pauseg==0){
+	if(pauseg==0)
+   {
 		pauseg=-1;				
       co_switch(emuThread);
 	}
@@ -208,4 +209,3 @@ bool retro_load_game_special(unsigned game_type, const struct retro_game_info *i
 void retro_cheat_reset(void){}
 void retro_cheat_set(unsigned unused, bool unused1, const char* unused2){}
 void retro_set_controller_port_device(unsigned in_port, unsigned device){}
-
