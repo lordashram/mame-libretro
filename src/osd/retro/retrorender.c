@@ -151,59 +151,35 @@ static inline UINT32 ycc_to_rgb(UINT32 ycc)
 //  palettized 16bpp source
 //-------------------------------------------------
 
-static inline UINT32 get_texel_palette16(const render_texinfo &texture, INT32 curu, INT32 curv)
-{
-   const UINT16 *texbase = reinterpret_cast<const UINT16 *>(texture.base) + (curv >> 16) * texture.rowpixels + (curu >> 16);
-   return texture.palette[texbase[0]];
-}
+#define get_texel_palette16(texture, curu, curv) ({const UINT16 *texbase = reinterpret_cast<const UINT16 *>(texture.base) + (curv >> 16) * texture.rowpixels + (curu >> 16);texture.palette[texbase[0]];})
 
 //-------------------------------------------------
 //  get_texel_palette16a - return a texel from a
 //  palettized 16bpp source with alpha
 //-------------------------------------------------
 
-static inline UINT32 get_texel_palette16a(const render_texinfo &texture, INT32 curu, INT32 curv)
-{
-   const UINT16 *texbase = reinterpret_cast<const UINT16 *>(texture.base) + (curv >> 16) * texture.rowpixels + (curu >> 16);
-   return texture.palette[texbase[0]];
-}
-
+#define get_texel_palette16a(texture, curu, curv) ({const UINT16 *texbase = reinterpret_cast<const UINT16 *>(texture.base) + (curv >> 16) * texture.rowpixels + (curu >> 16);texture.palette[texbase[0]];})
 
 	//-------------------------------------------------
 	//  get_texel_yuy16 - return a texel from a 16bpp
 	//  YCbCr source (pixel is returned as Cr-Cb-Y)
 	//-------------------------------------------------
 
-	static inline UINT32 get_texel_yuy16(const render_texinfo &texture, INT32 curu, INT32 curv)
-   {
-      const UINT16 *texbase = reinterpret_cast<const UINT16 *>(texture.base) + (curv >> 16) * texture.rowpixels + (curu >> 17) * 2;
-      return (texbase[(curu >> 16) & 1] >> 8) | ((texbase[0] & 0xff) << 8) | ((texbase[1] & 0xff) << 16);
-   }
-
+#define get_texel_yuy16(texture, curu, curv) ({const UINT16 *texbase = reinterpret_cast<const UINT16 *>(texture.base) + (curv >> 16) * texture.rowpixels + (curu >> 17) * 2; (texbase[(curu >> 16) & 1] >> 8) | ((texbase[0] & 0xff) << 8) | ((texbase[1] & 0xff) << 16);})
 
 	//-------------------------------------------------
 	//  get_texel_rgb32 - return a texel from a 32bpp
 	//  RGB source
 	//-------------------------------------------------
 
-	static inline UINT32 get_texel_rgb32(const render_texinfo &texture, INT32 curu, INT32 curv)
-   {
-      const UINT32 *texbase = reinterpret_cast<const UINT32 *>(texture.base) + (curv >> 16) * texture.rowpixels + (curu >> 16);
-      return texbase[0];
-   }
-
+#define get_texel_rgb32(texture, curu, curv) ({const UINT32 *texbase = reinterpret_cast<const UINT32 *>(texture.base) + (curv >> 16) * texture.rowpixels + (curu >> 16); texbase[0];})
 
 	//-------------------------------------------------
 	//  get_texel_argb32 - return a texel from a 32bpp
 	//  ARGB source
 	//-------------------------------------------------
 
-	static inline UINT32 get_texel_argb32(const render_texinfo &texture, INT32 curu, INT32 curv)
-   {
-      const UINT32 *texbase = reinterpret_cast<const UINT32 *>(texture.base) + (curv >> 16) * texture.rowpixels + (curu >> 16);
-      return texbase[0];
-   }
-
+#define get_texel_argb32(texture, curu, curv) ({const UINT32 *texbase = reinterpret_cast<const UINT32 *>(texture.base) + (curv >> 16) * texture.rowpixels + (curu >> 16); texbase[0];})
 
 	//-------------------------------------------------
 	//  draw_aa_pixel - draw an antialiased pixel
