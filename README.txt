@@ -16,21 +16,7 @@ OSD code is highly inspired by source code of the SDL osd of the official mame b
 
 Build :
 
-     for now you must build in 2 pass, one for the native buildtools and second for the 
-     target emulator build.
-  
-     build for android:
-
-     make "NATIVE=1" buildtools
-     make "platform=android" emulator -j4
-     
-     build for pc/linux:
-
-     make "NATIVE=1" buildtools
-     make "platform=unix" emulator -j4
-     
-
-	(NB: for 64 bits build export PTR64=1 , as autodectect failed a least for me )
+make -f Makefile.libretro
 
 Usage : 
 
