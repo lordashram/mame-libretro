@@ -59,17 +59,14 @@ OSDCOREOBJS := \
 	$(MINIOBJ)/retromisc.o \
 	$(MINIOBJ)/retrosync.o \
 	$(MINIOBJ)/retrowork.o \
-	$(MINIOBJ)/retroos.o \
+	$(MINIOBJ)/retroos.o
 
 #-------------------------------------------------
 # OSD mini library
 #-------------------------------------------------
-ifeq ($(BUILD_AND),0)
-OSDOBJS = \
-	$(MINIOBJ)/retromain.o $(LIBCOOBJ)/libco.o 
-else
-OSDOBJS = \
-	$(MINIOBJ)/retromain.o $(LIBCOOBJ)/libco.o $(LIBCOOBJ)/armeabi_asm.o
+OSDOBJS = $(LIBCOOBJ)/libco.o 
+ifeq ($(platform),android)
+OSDOBJS += $(LIBCOOBJ)/armeabi_asm.o
 endif
 
 #-------------------------------------------------
