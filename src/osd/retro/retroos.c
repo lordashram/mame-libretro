@@ -120,12 +120,24 @@ void osd_sleep(osd_ticks_t duration)
 
 int osd_get_num_processors(void)
 {
+#ifdef WIN32
+
+	SYSTEM_INFO info;
+
+	// otherwise, fetch the info from the system
+	GetSystemInfo(&info);
+
+	// max out at 4 for now since scaling above that seems to do poorly
+	return MIN(info.dwNumberOfProcessors, 4);
+#else
 	int processors = 1;
 
 #if defined(_SC_NPROCESSORS_ONLN)
 	processors = sysconf(_SC_NPROCESSORS_ONLN);
 #endif
 	return processors;
+	
+#endif
 }
 
 //============================================================
