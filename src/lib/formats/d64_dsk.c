@@ -39,6 +39,9 @@
 
 *********************************************************************/
 
+#ifdef WIN32
+#include <malloc.h>
+#endif
 #include "emu.h"
 #include "formats/d64_dsk.h"
 

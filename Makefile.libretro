@@ -239,6 +239,23 @@ else ifneq (,$(findstring hardfloat,$(platform)))
 endif
    CFLAGS += -DARM
 	LIBS += -lstdc++ -lpthread
+else ifeq ($(platform), wincross)
+   TARGETLIB := $(TARGET_NAME)_libretro.dll
+	TARGETOS = win32
+	CC ?= g++
+	LD ?= g++
+	NATIVELD = $(LD)
+	CC_AS ?= $(CC)
+	SHARED := -shared -static-libgcc -static-libstdc++ -s -Wl,--version-script=src/osd/retro/link.T
+   	#CFLAGS += -D__WIN32__ -D__WIN32_LIBRETRO__
+   	CCOMFLAGS += -D__WIN32__ -D__WIN32_LIBRETRO__
+	LDFLAGS +=   $(SHARED)
+	EXE = .exe
+	#LIBS += -lpthread
+	DEFS = -DCRLF=3
+ifneq (,$(findstring mingw64-w64,$(PATH)))
+PTR64=1
+endif
 else
    TARGETLIB := $(TARGET_NAME)_libretro.dll
 	TARGETOS = win32
