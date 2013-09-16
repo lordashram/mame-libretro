@@ -13,10 +13,18 @@
 #define _GNU_SOURCE     // for PTHREAD_MUTEX_RECURSIVE; needs to be here before other glibc headers are included
 #endif
 
+#ifdef WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#endif
+
 // standard C headers
 #include <math.h>
 #include <stdint.h>
+
+#ifndef WIN32
 #include <unistd.h>
+#endif
 
 // MAME headers
 #include "osdcomm.h"
