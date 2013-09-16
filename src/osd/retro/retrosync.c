@@ -16,6 +16,7 @@
 #ifdef WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <process.h>
 #endif
 
 // standard C headers
@@ -32,16 +33,23 @@
 
 #include "retrosync.h"
 #include <stdlib.h>
+
+#ifndef WIN32
 #include <pthread.h>
+#endif
+
 #include <errno.h>
 #include <signal.h>
 #include <sys/time.h>
 
+#ifndef WIN32
 struct hidden_mutex_t {
 	pthread_mutex_t id;
 };
+#endif
 
 struct osd_event {
+#ifndef WIN32
 	pthread_mutex_t     mutex;
 	pthread_cond_t      cond;
 	volatile INT32      autoreset;
@@ -51,11 +59,26 @@ struct osd_event {
 #else
 	INT8                padding[48];    // A bit more padding
 #endif
+
+#else
+	void *  ptr;
+#endif
+
 };
 
 //============================================================
 //  TYPE DEFINITIONS
 //============================================================
+#ifdef WIN32
+typedef BOOL (WINAPI *try_enter_critical_section_ptr)(LPCRITICAL_SECTION lpCriticalSection);
+static try_enter_critical_section_ptr try_enter_critical_section = NULL;
+static int checked_for_try_enter = FALSE;
+
+struct osd_lock
+{
+	CRITICAL_SECTION    critsect;
+};
+#endif
 
 struct osd_thread {
 #ifdef WIN32
@@ -87,6 +110,7 @@ osd_scalable_lock *osd_scalable_lock_alloc(void)
 	lock = (osd_scalable_lock *)calloc(1, sizeof(*lock));
 
 #ifdef WIN32
+	memset(lock, 0, sizeof(*lock));
 	InitializeCriticalSection(&lock->critsect);
 #else
 	lock->lock = osd_lock_alloc();
@@ -246,6 +270,9 @@ void osd_lock_free(osd_lock *lock)
 
 osd_event *osd_event_alloc(int manualreset, int initialstate)
 {
+#ifdef WIN32
+	return (osd_event *) CreateEvent(NULL, manualreset, initialstate, NULL);
+#else
 	osd_event *ev;
 	pthread_mutexattr_t mtxattr;
 
@@ -258,6 +285,7 @@ osd_event *osd_event_alloc(int manualreset, int initialstate)
 	ev->autoreset = !manualreset;
 
 	return ev;
+#endif
 }
 
 //============================================================
@@ -266,9 +294,13 @@ osd_event *osd_event_alloc(int manualreset, int initialstate)
 
 void osd_event_free(osd_event *event)
 {
+#ifndef WIN32
 	pthread_mutex_destroy(&event->mutex);
 	pthread_cond_destroy(&event->cond);
 	free(event);
+#else
+	CloseHandle((HANDLE) event);
+#endif
 }
 
 //============================================================
@@ -277,6 +309,7 @@ void osd_event_free(osd_event *event)
 
 void osd_event_set(osd_event *event)
 {
+#ifndef WIN32
 	pthread_mutex_lock(&event->mutex);
 	if (event->signalled == FALSE)
 	{
@@ -287,6 +320,11 @@ void osd_event_set(osd_event *event)
 			pthread_cond_broadcast(&event->cond);
 	}
 	pthread_mutex_unlock(&event->mutex);
+#else
+	SetEvent((HANDLE) event);
+#endif
+	
+	
 }
 
 //============================================================
@@ -295,9 +333,13 @@ void osd_event_set(osd_event *event)
 
 void osd_event_reset(osd_event *event)
 {
+#ifndef WIN32
 	pthread_mutex_lock(&event->mutex);
 	event->signalled = FALSE;
 	pthread_mutex_unlock(&event->mutex);
+#else
+	ResetEvent((HANDLE) event);	
+#endif
 }
 
 //============================================================
@@ -306,6 +348,11 @@ void osd_event_reset(osd_event *event)
 
 int osd_event_wait(osd_event *event, osd_ticks_t timeout)
 {
+#ifdef WIN32
+	int ret = WaitForSingleObject((HANDLE) event, timeout * 1000 / osd_ticks_per_second());
+	return ( ret == WAIT_OBJECT_0);
+#else
+
 	pthread_mutex_lock(&event->mutex);
 	if (!timeout)
 	{
@@ -360,6 +407,7 @@ int osd_event_wait(osd_event *event, osd_ticks_t timeout)
 	pthread_mutex_unlock(&event->mutex);
 
 	return TRUE;
+#endif
 }
 
 //============================================================
@@ -382,13 +430,17 @@ static unsigned __stdcall worker_thread_entry(void *param)
 osd_thread *osd_thread_create(osd_thread_callback callback, void *cbparam)
 {
 	osd_thread *thread;
+#ifndef WIN32
 	pthread_attr_t  attr;
+#else
+	uintptr_t handle;
+#endif
 
 	thread = (osd_thread *)calloc(1, sizeof(osd_thread));
 #ifdef WIN32
    thread->callback = callback;
    thread->params = cbparam;
-   uintptr_t handle = _beginthreadex(NULL, 0, worker_thread_entry, thread, 0, NULL);
+   handle = _beginthreadex(NULL, 0, worker_thread_entry, thread, 0, NULL);
    thread->handle = (HANDLE)handle;
 #else
 	pthread_attr_init(&attr);
