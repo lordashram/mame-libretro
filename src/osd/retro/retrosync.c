@@ -69,7 +69,11 @@ struct osd_thread {
 
 struct osd_scalable_lock
 {
+#ifdef WIN32
+	CRITICAL_SECTION    critsect;
+#else
 	osd_lock            *lock;
+#endif
 };
 
 //============================================================
@@ -82,7 +86,11 @@ osd_scalable_lock *osd_scalable_lock_alloc(void)
 
 	lock = (osd_scalable_lock *)calloc(1, sizeof(*lock));
 
+#ifdef WIN32
+	InitializeCriticalSection(&lock->critsect);
+#else
 	lock->lock = osd_lock_alloc();
+#endif
 	return lock;
 }
 
@@ -90,7 +98,7 @@ osd_scalable_lock *osd_scalable_lock_alloc(void)
 INT32 osd_scalable_lock_acquire(osd_scalable_lock *lock)
 {
 #if defined(WIN32)
-   EnterCriticalSection((LPCRITICAL_SECTION)&lock->lock);
+   EnterCriticalSection(&lock->critsect);
 #else
 	osd_lock_acquire(lock->lock);
 #endif
@@ -100,12 +108,20 @@ INT32 osd_scalable_lock_acquire(osd_scalable_lock *lock)
 
 void osd_scalable_lock_release(osd_scalable_lock *lock, INT32 myslot)
 {
+#ifdef WIN32
+	LeaveCriticalSection(&lock->critsect);
+#else
 	osd_lock_release(lock->lock);
+#endif
 }
 
 void osd_scalable_lock_free(osd_scalable_lock *lock)
 {
+#ifdef WIN32
+	DeleteCriticalSection(&lock->critsect);
+#else
 	osd_lock_free(lock->lock);
+#endif
 	free(lock);
 }
 
@@ -116,6 +132,13 @@ void osd_scalable_lock_free(osd_scalable_lock *lock)
 
 osd_lock *osd_lock_alloc(void)
 {
+#ifdef WIN32
+	osd_lock *lock = (osd_lock *)malloc(sizeof(*lock));
+	if (lock == NULL)
+		return NULL;
+	InitializeCriticalSection(&lock->critsect);
+	return lock;
+#else
 	hidden_mutex_t *mutex;
 	pthread_mutexattr_t mtxattr;
 
@@ -126,6 +149,7 @@ osd_lock *osd_lock_alloc(void)
 	pthread_mutex_init(&mutex->id, &mtxattr);
 
 	return (osd_lock *)mutex;
+#endif
 }
 
 //============================================================
@@ -134,13 +158,17 @@ osd_lock *osd_lock_alloc(void)
 
 void osd_lock_acquire(osd_lock *lock)
 {
+#ifdef WIN32
+	// block until we can acquire the lock
+	EnterCriticalSection(&lock->critsect);
+#else
 	hidden_mutex_t *mutex = (hidden_mutex_t *) lock;
 	int r;
 
 	r = pthread_mutex_lock(&mutex->id);
 	if (r==0)
 		return;
-	//mame_printf_error("Error on lock: %d: %s\n", r, strerror(r));
+#endif
 }
 
 //============================================================
@@ -149,15 +177,34 @@ void osd_lock_acquire(osd_lock *lock)
 
 int osd_lock_try(osd_lock *lock)
 {
+#ifdef WIN32
+	int result = TRUE;
+
+	// if we haven't yet checked for the TryEnter API, do it now
+	if (!checked_for_try_enter)
+	{
+		// see if we can use TryEnterCriticalSection
+		HMODULE library = LoadLibrary(TEXT("kernel32.dll"));
+		if (library != NULL)
+			try_enter_critical_section = (try_enter_critical_section_ptr)GetProcAddress(library, "TryEnterCriticalSection");
+		checked_for_try_enter = TRUE;
+	}
+
+	// if we have it, use it, otherwise just block
+	if (try_enter_critical_section != NULL)
+		result = (*try_enter_critical_section)(&lock->critsect);
+	else
+		EnterCriticalSection(&lock->critsect);
+	return result;
+#else
 	hidden_mutex_t *mutex = (hidden_mutex_t *) lock;
 	int r;
 
 	r = pthread_mutex_trylock(&mutex->id);
 	if (r==0)
 		return 1;
-	//if (r!=EBUSY)
-	//  mame_printf_error("Error on trylock: %d: %s\n", r, strerror(r));
 	return 0;
+#endif
 }
 
 //============================================================
@@ -166,9 +213,13 @@ int osd_lock_try(osd_lock *lock)
 
 void osd_lock_release(osd_lock *lock)
 {
+#ifdef WIN32
+	LeaveCriticalSection(&lock->critsect);
+#else
 	hidden_mutex_t *mutex = (hidden_mutex_t *) lock;
 
 	pthread_mutex_unlock(&mutex->id);
+#endif
 }
 
 //============================================================
@@ -177,11 +228,16 @@ void osd_lock_release(osd_lock *lock)
 
 void osd_lock_free(osd_lock *lock)
 {
+#ifdef WIN32
+	DeleteCriticalSection(&lock->critsect);
+	free(lock);
+#else
 	hidden_mutex_t *mutex = (hidden_mutex_t *) lock;
 
 	pthread_mutex_unlock(&mutex->id);
 	pthread_mutex_destroy(&mutex->id);
 	free(mutex);
+#endif
 }
 
 //============================================================
