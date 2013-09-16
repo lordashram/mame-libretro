@@ -118,6 +118,11 @@ else ifeq ($(platform), osx)
 	TARGETOS = macosx
    fpic := -fPIC
    SHARED := -dynamiclib
+   CC = clang++
+   LD = clang++
+   NATIVELD = clang++
+   CC_AS ?= $(CC)
+   PYTHON ?= @python
 ifeq ($(COMMAND_MODE),"legacy")
 ARFLAGS = -crs
 endif
@@ -352,7 +357,7 @@ OPTIMIZE = 3
 MD = -mkdir$(EXE_EXT)
 RM = @rm -f
 OBJDUMP = @objdump
-PYTHON = @python2
+PYTHON ?= @python2
 
 #-------------------------------------------------
 # form the name of the executable
@@ -415,7 +420,12 @@ CFLAGS = $(CCOMFLAGS) $(CPPONLYFLAGS)
 
 # we compile C-only to C89 standard with GNU extensions
 # we compile C++ code to C++98 standard with GNU extensions
+#CONLYFLAGS += -std=gnu89
+ifeq ($(platform), osx)
+CONLYFLAGS += -ansi
+else
 CONLYFLAGS += -std=gnu89
+endif
 CPPONLYFLAGS += -x c++ -std=gnu++98
 COBJFLAGS += -x objective-c++
 
