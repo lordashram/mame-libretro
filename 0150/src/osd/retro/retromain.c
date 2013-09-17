@@ -26,6 +26,8 @@ char g_rom_dir[1024];
 
 #include "retrorender.c"
 
+static bool mouse_enable = false;
+
 static void extract_basename(char *buf, const char *path, size_t size)
 {
    const char *base = strrchr(path, '/');

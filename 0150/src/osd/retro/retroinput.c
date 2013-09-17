@@ -44,21 +44,21 @@ static void initInput(running_machine &machine)
 	int i,button;
 	char defname[20];
 
-#if 0
-	mouse_device = machine.input().device_class(DEVICE_CLASS_MOUSE).add_device("Mice1");
-	mouse_enabled = 1;
-	// add the axes
-	input_device_item_add_mouse(mouse_device , "X", &mouseLX, ITEM_ID_XAXIS, generic_axis_get_state);
-	input_device_item_add_mouse(mouse_device , "Y", &mouseLY, ITEM_ID_YAXIS, generic_axis_get_state);
+   if (mouse_enable)
+   {
+      mouse_device = machine.input().device_class(DEVICE_CLASS_MOUSE).add_device("Mice1");
+      // add the axes
+      input_device_item_add_mouse(mouse_device , "X", &mouseLX, ITEM_ID_XAXIS, generic_axis_get_state);
+      input_device_item_add_mouse(mouse_device , "Y", &mouseLY, ITEM_ID_YAXIS, generic_axis_get_state);
 
-	for (button = 0; button < 4; button++)
-	{
-		input_item_id itemid = (input_item_id) (ITEM_ID_BUTTON1+button);
-		sprintf(defname, "B%d", button + 1);
+      for (button = 0; button < 4; button++)
+      {
+         input_item_id itemid = (input_item_id) (ITEM_ID_BUTTON1+button);
+         sprintf(defname, "B%d", button + 1);
 
-		input_device_item_add_mouse(mouse_device, defname, &mouseBUT[button], itemid, generic_button_get_state);
-	}
-#endif
+         input_device_item_add_mouse(mouse_device, defname, &mouseBUT[button], itemid, generic_button_get_state);
+      }
+   }
 
    P1_device = machine.input().device_class(DEVICE_CLASS_KEYBOARD).add_device("Pad1", P1_device);
    P2_device = machine.input().device_class(DEVICE_CLASS_KEYBOARD).add_device("Pad2", P2_device);
@@ -555,52 +555,45 @@ static void initInput(running_machine &machine)
 
 void retro_poll_mame_input()
 {
-	//Mouse
-#if 0
-   static int mbL=0,mbR=0;
-	int mouse_l;
-	int mouse_r;
-  	int16_t mouse_x;
-   int16_t mouse_y;
-#endif
-
 	input_poll_cb();
 
-#if 0
-
-	mouse_x = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_X);
-	mouse_y = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_Y);
-	mouse_l = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT);
-	mouse_r = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_RIGHT);
-
-	if(mouse_enabled)
+   if (mouse_enable)
    {
-		mouseLX=mouse_x*INPUT_RELATIVE_PER_PIXEL;;
-		mouseLY=mouse_y*INPUT_RELATIVE_PER_PIXEL;;
-	
-		if(mbL==0 && mouse_l)
+      static int mbL=0,mbR=0;
+      int mouse_l;
+      int mouse_r;
+      int16_t mouse_x;
+      int16_t mouse_y;
+
+      mouse_x = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_X);
+      mouse_y = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_Y);
+      mouse_l = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT);
+      mouse_r = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_RIGHT);
+      mouseLX=mouse_x*INPUT_RELATIVE_PER_PIXEL;;
+      mouseLY=mouse_y*INPUT_RELATIVE_PER_PIXEL;;
+
+      if(mbL==0 && mouse_l)
       {
-			mbL=1;		
-			mouseBUT[0]=0x80;
-		}
-		else if(mbL==1 && !mouse_l)
+         mbL=1;		
+         mouseBUT[0]=0x80;
+      }
+      else if(mbL==1 && !mouse_l)
       {	
-			mouseBUT[0]=0;
+         mouseBUT[0]=0;
          mbL=0;
-		}
-	
-		if(mbR==0 && mouse_r)
+      }
+
+      if(mbR==0 && mouse_r)
       {
-			mbR=1;
-			mouseBUT[1]=1;
-		}
-		else if(mbR==1 && !mouse_r)
+         mbR=1;
+         mouseBUT[1]=1;
+      }
+      else if(mbR==1 && !mouse_r)
       {
- 			mouseBUT[1]=0;
+         mouseBUT[1]=0;
          mbR=0;
-		}
-	}
-#endif
+      }
+   }
 
 	P1_state[KEY_TAB] = input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2);
 	P1_state[KEY_ENTER] = input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2);

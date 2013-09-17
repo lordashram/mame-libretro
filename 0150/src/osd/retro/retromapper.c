@@ -31,7 +31,33 @@ void retro_set_input_poll(retro_input_poll_t cb) { input_poll_cb = cb; }
 
 void retro_set_video_refresh(retro_video_refresh_t cb) { video_cb = cb; }
 void retro_set_audio_sample(retro_audio_sample_t cb) { }
-void retro_set_environment(retro_environment_t cb) { environ_cb = cb; }
+
+void retro_set_environment(retro_environment_t cb)
+{
+   static const struct retro_variable vars[] = {
+      { "mame_current_mouse_enable", "Mouse supported; disabled|enabled" },
+      { NULL, NULL },
+   };
+
+   environ_cb = cb;
+
+   cb(RETRO_ENVIRONMENT_SET_VARIABLES, (void*)vars);
+}
+
+static void check_variables(void)
+{
+   struct retro_variable var = {0};
+   var.key = "mame_current_mouse_enable";
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      fprintf(stderr, "value: %s\n", var.value);
+      if (strcmp(var.value, "disabled") == 0)
+         mouse_enable = false;
+      if (strcmp(var.value, "enabled") == 0)
+         mouse_enable = true;
+   }
+}
 
 unsigned retro_api_version(void)
 {
@@ -121,6 +147,10 @@ void retro_reset (void) {}
 
 void retro_run (void)
 {
+   bool updated = false;
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated) && updated)
+      check_variables();
+
 	retro_poll_mame_input();
 
 	if (draw_this_frame)
@@ -167,7 +197,9 @@ static void keyboard_cb(bool down, unsigned keycode, uint32_t character, uint16_
 bool retro_load_game(const struct retro_game_info *info) 
 {
 	struct retro_keyboard_callback cb = { keyboard_cb };
-    	environ_cb(RETRO_ENVIRONMENT_SET_KEYBOARD_CALLBACK, &cb);
+   environ_cb(RETRO_ENVIRONMENT_SET_KEYBOARD_CALLBACK, &cb);
+
+   check_variables();
 
 #ifdef M16B
 	memset(videoBuffer,0,1024*1024*2);
