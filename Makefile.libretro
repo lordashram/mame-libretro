@@ -62,6 +62,21 @@ CPPONLYFLAGS =
 LDFLAGS =
 LDFLAGSEMULATOR =
 
+# uncomment next line to build expat as part of MAME build
+BUILD_EXPAT = 1
+
+# uncomment next line to build zlib as part of MAME build
+BUILD_ZLIB = 1
+
+# uncomment next line to build libflac as part of MAME build
+BUILD_FLAC = 1
+
+# uncomment next line to build jpeglib as part of MAME build
+BUILD_JPEGLIB = 1
+
+# uncomment next line to build PortMidi as part of MAME/MESS build
+#BUILD_MIDILIB = 1
+
 ifeq ($(platform), unix)
    TARGETLIB := $(TARGET_NAME)_libretro.so
 	TARGETOS=linux  
@@ -245,9 +260,8 @@ else ifeq ($(platform), wincross)
 	CC ?= g++
 	LD ?= g++
 	NATIVELD = $(LD)
-	CC_AS ?= $(CC)
+	CC_AS ?= gcc
 	SHARED := -shared -static-libgcc -static-libstdc++ -s -Wl,--version-script=src/osd/retro/link.T
-   	#CFLAGS += -D__WIN32__ -D__WIN32_LIBRETRO__
    	CCOMFLAGS += -D__WIN32__ -D__WIN32_LIBRETRO__
 	LDFLAGS +=   $(SHARED)
 	EXE = .exe
@@ -344,20 +358,6 @@ CROSS_BUILD_OSD = $(OSD)
 # for details
 #-------------------------------------------------
 
-# uncomment next line to build expat as part of MAME build
-BUILD_EXPAT = 1
-
-# uncomment next line to build zlib as part of MAME build
-# BUILD_ZLIB = 1
-
-# uncomment next line to build libflac as part of MAME build
-BUILD_FLAC = 1
-
-# uncomment next line to build jpeglib as part of MAME build
-BUILD_JPEGLIB = 1
-
-# uncomment next line to build PortMidi as part of MAME/MESS build
-#BUILD_MIDILIB = 1
 
 # specify optimization level or leave commented to use the default
 # (default is OPTIMIZE = 3 normally, or OPTIMIZE = 0 with symbols)
