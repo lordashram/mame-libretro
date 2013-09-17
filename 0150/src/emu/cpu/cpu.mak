@@ -1395,7 +1395,7 @@ BUILD += $(M68KMAKE)
 
 $(M68KMAKE): $(CPUOBJ)/m68000/m68kmake.o $(LIBOCORE)
 	@echo Linking $@...
-	$(LD) $(LDFLAGS) $(OSDBGLDFLAGS) $^ $(LIBS) -o $@
+	$(NATIVELD) $(NATIVELDFLAGS) $(OSDBGLDFLAGS) $^ $(LIBS) -o $@
 endif
 
 # rule to ensure we build the header before building the core CPU file

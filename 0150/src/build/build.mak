@@ -25,21 +25,21 @@ MAKELIST_TARGET = $(BUILDOUT)/makelist$(BUILD_EXE)
 PNG2BDC_TARGET = $(BUILDOUT)/png2bdc$(BUILD_EXE)
 VERINFO_TARGET = $(BUILDOUT)/verinfo$(BUILD_EXE)
 
-ifeq ($(TARGETOS),win32)
-FILE2STR = $(subst /,\,$(FILE2STR_TARGET))
-MAKEDEP = $(subst /,\,$(MAKEDEP_TARGET))
-MAKEMAK = $(subst /,\,$(MAKEMAK_TARGET))
-MAKELIST = $(subst /,\,$(MAKELIST_TARGET))
-PNG2BDC = $(subst /,\,$(PNG2BDC_TARGET))
-VERINFO = $(subst /,\,$(VERINFO_TARGET))
-else
+#ifeq ($(TARGETOS),win32)
+#FILE2STR = $(subst /,\,$(FILE2STR_TARGET))
+#MAKEDEP = $(subst /,\,$(MAKEDEP_TARGET))
+#MAKEMAK = $(subst /,\,$(MAKEMAK_TARGET))
+#MAKELIST = $(subst /,\,$(MAKELIST_TARGET))
+#PNG2BDC = $(subst /,\,$(PNG2BDC_TARGET))
+#VERINFO = $(subst /,\,$(VERINFO_TARGET))
+#else
 FILE2STR = $(FILE2STR_TARGET)
 MAKEDEP = $(MAKEDEP_TARGET)
 MAKEMAK = $(MAKEMAK_TARGET)
 MAKELIST = $(MAKELIST_TARGET)
 PNG2BDC = $(PNG2BDC_TARGET)
 VERINFO = $(VERINFO_TARGET)
-endif
+#endif
 
 ifneq ($(CROSS_BUILD),1)
 BUILD += \
@@ -61,7 +61,7 @@ FILE2STROBJS = \
 
 $(FILE2STR_TARGET): $(FILE2STROBJS) $(LIBOCORE)
 	@echo Linking $@...
-	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
+	$(NATIVELD) $(NATIVELDFLAGS) $^ $(LIBS) -o $@
 
 
 
@@ -74,7 +74,7 @@ MAKEDEPOBJS = \
 
 $(MAKEDEP_TARGET): $(MAKEDEPOBJS) $(LIBUTIL) $(LIBOCORE) $(ZLIB)
 	@echo Linking $@...
-	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
+	$(NATIVELD) $(NATIVELDFLAGS) $^ $(LIBS) -o $@
 
 
 
@@ -87,7 +87,7 @@ MAKEMAKOBJS = \
 
 $(MAKEMAK_TARGET): $(MAKEMAKOBJS) $(LIBUTIL) $(LIBOCORE) $(ZLIB)
 	@echo Linking $@...
-	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
+	$(NATIVELD) $(NATIVELDFLAGS) $^ $(LIBS) -o $@
 
 
 
@@ -100,7 +100,7 @@ MAKELISTOBJS = \
 
 $(MAKELIST_TARGET): $(MAKELISTOBJS) $(LIBUTIL) $(LIBOCORE) $(ZLIB)
 	@echo Linking $@...
-	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
+	$(NATIVELD) $(NATIVELDFLAGS) $^ $(LIBS) -o $@
 
 
 
@@ -113,7 +113,7 @@ PNG2BDCOBJS = \
 
 $(PNG2BDC_TARGET): $(PNG2BDCOBJS) $(LIBUTIL) $(LIBOCORE) $(ZLIB)
 	@echo Linking $@...
-	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
+	$(NATIVELD) $(NATIVELDFLAGS) $^ $(LIBS) -o $@
 
 
 
@@ -126,6 +126,6 @@ VERINFOOBJS = \
 
 $(VERINFO_TARGET): $(VERINFOOBJS) $(LIBOCORE)
 	@echo Linking $@...
-	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
+	$(NATIVELD) $(NATIVELDFLAGS) $^ $(LIBS) -o $@
 
 endif
