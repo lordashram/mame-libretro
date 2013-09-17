@@ -490,19 +490,3 @@ endif
 $(LIBOBJ)/lua/%.o: $(LIBSRC)/lua/%.c | $(OSPREBUILD)
 	@echo Compiling $<...
 	$(CC_AS) $(CDEFS) $(CCOMFLAGS) $(CONLYFLAGS) -DLUA_COMPAT_ALL $(LUA_FLAGS) -c $< -o $@
-
-#-------------------------------------------------
-# web library objects
-#-------------------------------------------------
-
-WEBOBJS = \
-	$(LIBOBJ)/web/mongoose.o \
-	$(LIBOBJ)/web/json/json_reader.o \
-	$(LIBOBJ)/web/json/json_value.o \
-	$(LIBOBJ)/web/json/json_writer.o \
-
-$(OBJ)/libweb.a: $(WEBOBJS)
-
-$(LIBOBJ)/web/%.o: $(LIBSRC)/web/%.cpp | $(OSPREBUILD)
-	@echo Compiling $<...
-	$(CC_AS) $(CDEFS) $(CFLAGS) -I$(LIBSRC)/web -c $< -o $@

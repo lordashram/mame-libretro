@@ -84,7 +84,6 @@
 #include "crsshair.h"
 #include "validity.h"
 #include "debug/debugcon.h"
-#include "webengine.h"
 #include <time.h>
 
 
@@ -148,8 +147,6 @@ int mame_execute(emu_options &options, osd_interface &osd)
 	bool exit_pending = false;
 	int error = MAMERR_NONE;
 
-	web_engine web(options);
-
 	while (error == MAMERR_NONE && !exit_pending)
 	{
 		// if no driver, use the internal empty driver
@@ -188,8 +185,6 @@ int mame_execute(emu_options &options, osd_interface &osd)
 		// looooong term: remove this
 		global_machine = &machine;
 
-		web.set_machine(machine);
-		web.push_message("update_machine");
 		// run the machine
 		error = machine.run(firstrun);
 		firstrun = false;
