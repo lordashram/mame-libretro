@@ -318,6 +318,9 @@ void ui_initialize(running_machine &machine)
     ui_display_startup_screens - display the
     various startup screens
 -------------------------------------------------*/
+#ifdef RETRO
+extern bool nagscreenpatch_enable;
+#endif
 
 int ui_display_startup_screens(running_machine &machine, int first_time, int show_disclaimer)
 {
@@ -343,11 +346,19 @@ int ui_display_startup_screens(running_machine &machine, int first_time, int sho
 		switch (state)
 		{
 			case 0:
+#ifdef RETRO
+				if(nagscreenpatch_enable==true)
+				break;
+#endif
 				if (show_disclaimer && disclaimer_string(machine, messagebox_text).len() > 0)
 					ui_set_handler(handler_messagebox_ok, 0);
 				break;
 
 			case 1:
+#ifdef RETRO
+				if(nagscreenpatch_enable==true)
+				break;
+#endif
 				if (show_warnings && warnings_string(machine, messagebox_text).len() > 0)
 				{
 					ui_set_handler(handler_messagebox_ok, 0);
@@ -359,6 +370,10 @@ int ui_display_startup_screens(running_machine &machine, int first_time, int sho
 				break;
 
 			case 2:
+#ifdef RETRO
+				if(nagscreenpatch_enable==true)
+				break;
+#endif
 				if (show_gameinfo && game_info_astring(machine, messagebox_text).len() > 0)
 					ui_set_handler(handler_messagebox_anykey, 0);
 				break;
@@ -369,11 +384,17 @@ int ui_display_startup_screens(running_machine &machine, int first_time, int sho
 		while (machine.input().poll_switches() != INPUT_CODE_INVALID) ;
 
 		/* loop while we have a handler */
+#ifdef RETRO
+	if(nagscreenpatch_enable==false)				
+#endif
 		while (ui_handler_callback != handler_ingame && !machine.scheduled_event_pending() && !ui_menu::stack_has_special_main_menu())
 			machine.video().frame_update();
 
 		/* clear the handler and force an update */
 		ui_set_handler(handler_ingame, 0);
+#ifdef RETRO
+	if(nagscreenpatch_enable==false)				
+#endif
 		machine.video().frame_update();
 	}
 
@@ -394,11 +415,15 @@ void ui_set_startup_text(running_machine &machine, const char *text, int force)
 {
 	static osd_ticks_t lastupdatetime = 0;
 	osd_ticks_t curtime = osd_ticks();
-
+#ifdef RETRO
+	if(nagscreenpatch_enable==false){				
+#endif
 	/* copy in the new text */
 	messagebox_text.cpy(text);
 	messagebox_backcolor = UI_BACKGROUND_COLOR;
-
+#ifdef RETRO
+	}				
+#endif
 	/* don't update more than 4 times/second */
 	if (force || (curtime - lastupdatetime) > osd_ticks_per_second() / 4)
 	{

@@ -36,6 +36,7 @@ void retro_set_environment(retro_environment_t cb)
 {
    static const struct retro_variable vars[] = {
       { "mame_current_mouse_enable", "Mouse supported; disabled|enabled" },
+      { "mame_current_nagscreenpatch_enable", "Nagscreen patch Enabled; disabled|enabled" },
       { NULL, NULL },
    };
 
@@ -56,6 +57,18 @@ static void check_variables(void)
          mouse_enable = false;
       if (strcmp(var.value, "enabled") == 0)
          mouse_enable = true;
+   }
+
+   var.key = "mame_current_nagscreenpatch_enable";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      fprintf(stderr, "value: %s\n", var.value);
+      if (strcmp(var.value, "disabled") == 0)
+         nagscreenpatch_enable = false;
+      if (strcmp(var.value, "enabled") == 0)
+         nagscreenpatch_enable = true;
    }
 }
 
