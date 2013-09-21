@@ -75,7 +75,13 @@ void mini_osd_interface::update(bool skip_redraw)
       draw_this_frame = true;
       // get the minimum width/height for the current layout
       int minwidth, minheight;
-      our_target->compute_minimum_size(minwidth, minheight);
+
+	if(videoapproach1_enable==false){	     
+		our_target->compute_minimum_size(minwidth, minheight);
+	}
+	else{
+     		 minwidth=1024;minheight=768;
+        }
 
       if (FirstTimeUpdate == 1) {
 
@@ -103,6 +109,11 @@ void mini_osd_interface::update(bool skip_redraw)
          rtwi=minwidth;
          rthe=minheight;
          topw=minwidth;
+      }
+
+      if(videoapproach1_enable){
+		rtwi=topw=1024;
+		rthe=768;
       }
 
       // make that the size of our target

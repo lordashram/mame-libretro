@@ -27,6 +27,7 @@ char g_rom_dir[1024];
 #include "retrorender.c"
 
 static bool mouse_enable = false;
+static bool videoapproach1_enable = false;
 bool nagscreenpatch_enable = false;
 
 static void extract_basename(char *buf, const char *path, size_t size)
