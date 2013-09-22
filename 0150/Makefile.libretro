@@ -40,7 +40,7 @@ DEFS = -DCRLF=2 -DDISABLE_MIDI=1
 # Default to something reasonable for all platforms
 ARFLAGS = -cr
 
-TARGET_NAME := mame2013
+TARGET_NAME := mame
 EXE = 
 LIBS = 
 
