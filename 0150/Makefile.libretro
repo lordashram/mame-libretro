@@ -133,9 +133,9 @@ else ifeq ($(platform), osx)
 	TARGETOS = macosx
    fpic := -fPIC
    SHARED := -dynamiclib
-   CC = clang++
-   LD = clang++
-   NATIVELD = clang++
+   CC = clang
+   LD = c++
+   NATIVELD = c++
    CC_AS ?= $(CC)
    PYTHON ?= @python
 ifeq ($(COMMAND_MODE),"legacy")
