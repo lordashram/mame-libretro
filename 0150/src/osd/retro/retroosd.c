@@ -161,7 +161,7 @@ void mini_osd_interface::update(bool skip_redraw)
 //============================================================
 void mini_osd_interface::update_audio_stream(const INT16 *buffer, int samples_this_frame) 
 {
-	audio_batch_cb(buffer, samples_this_frame);
+	if(pauseg!=-1)audio_batch_cb(buffer, samples_this_frame);
 }
   
 
