@@ -224,7 +224,7 @@ private:
 	void recalculate_irq(void);
 	void recalculate_firq(void);
 
-	ATTR_FORCE_INLINE void set_interrupt_value(UINT8 interrupt, bool value)
+	inline ATTR_FORCE_INLINE void set_interrupt_value(UINT8 interrupt, bool value)
 	{
 		/* save the old interrupt value */
 		UINT8 old_interrupt_value = m_interrupt_value;

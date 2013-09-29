@@ -137,7 +137,7 @@ protected:
 
 		// optimized template function that emits a single character
 		template<int xscale>
-		ATTR_FORCE_INLINE void emit_character(UINT8 mode, const UINT8 *data, int length, pixel_t *RESTRICT pixels, int y, const pixel_t *palette)
+		inline ATTR_FORCE_INLINE void emit_character(UINT8 mode, const UINT8 *data, int length, pixel_t *RESTRICT pixels, int y, const pixel_t *palette)
 		{
 			for (int i = 0; i < length; i++)
 			{
@@ -192,7 +192,7 @@ protected:
 		UINT8 m_text_fontdata_lower_case_inverse[64*12];
 
 		// optimized function that tests a single bit
-		ATTR_FORCE_INLINE pixel_t bit_test(UINT8 data, int shift, pixel_t color_0, pixel_t color_1)
+		inline ATTR_FORCE_INLINE pixel_t bit_test(UINT8 data, int shift, pixel_t color_0, pixel_t color_1)
 		{
 			return data & (0x80 >> shift) ? color_1 : color_0;
 		}
@@ -210,7 +210,7 @@ protected:
 
 		// artifacting application
 		template<int xscale>
-		ATTR_FORCE_INLINE void process_artifacts(pixel_t *pixels, UINT8 mode, const pixel_t *palette)
+		inline ATTR_FORCE_INLINE void process_artifacts(pixel_t *pixels, UINT8 mode, const pixel_t *palette)
 		{
 			if (((mode & (MODE_AG|MODE_GM2|MODE_GM1|MODE_GM0)) == (MODE_AG|MODE_GM2|MODE_GM1|MODE_GM0))
 				&& (m_artifacting != 0))
@@ -302,7 +302,7 @@ protected:
 	}
 
 	// changes the geometry
-	ATTR_FORCE_INLINE void set_geometry(UINT16 top_border_scanlines, UINT16 body_scanlines, bool wide)
+	inline ATTR_FORCE_INLINE void set_geometry(UINT16 top_border_scanlines, UINT16 body_scanlines, bool wide)
 	{
 		if (UNEXPECTED((m_top_border_scanlines != top_border_scanlines)
 			|| (m_body_scanlines != body_scanlines)
@@ -316,7 +316,7 @@ protected:
 	}
 
 	// calculates the border color
-	static ATTR_FORCE_INLINE border_color_t border_value(UINT8 mode, bool is_mc6847t1)
+	static inline ATTR_FORCE_INLINE border_color_t border_value(UINT8 mode, bool is_mc6847t1)
 	{
 		border_color_t result;
 
@@ -339,7 +339,7 @@ protected:
 	}
 
 	// checks to see if the video has changed
-	ATTR_FORCE_INLINE bool has_video_changed(void)
+	inline ATTR_FORCE_INLINE bool has_video_changed(void)
 	{
 		/* poll the artifacting config */
 		m_artifacter.poll_config();
@@ -352,7 +352,7 @@ protected:
 
 	// updates a byte in the video state
 	template<class T>
-	ATTR_FORCE_INLINE bool update_value(T *ptr, T byte)
+	inline ATTR_FORCE_INLINE bool update_value(T *ptr, T byte)
 	{
 		bool result = false;
 		if (*ptr != byte)
@@ -366,7 +366,7 @@ protected:
 
 	// template function for emitting graphics bytes
 	template<int bits_per_pixel, int xscale>
-	ATTR_FORCE_INLINE void emit_graphics(const UINT8 *data, int length, pixel_t *RESTRICT pixels, UINT16 color_base, const pixel_t *RESTRICT palette)
+	inline ATTR_FORCE_INLINE void emit_graphics(const UINT8 *data, int length, pixel_t *RESTRICT pixels, UINT16 color_base, const pixel_t *RESTRICT palette)
 	{
 		for (int i = 0; i < length; i++)
 		{
