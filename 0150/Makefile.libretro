@@ -40,7 +40,7 @@ DEFS = -DCRLF=2 -DDISABLE_MIDI=1
 # Default to something reasonable for all platforms
 ARFLAGS = -cr
 
-TARGET_NAME := mame
+TARGET_NAME := $(TARGET)
 EXE = 
 LIBS = 
 
@@ -297,8 +297,16 @@ endif
 #################   BEGIN USER-CONFIGURABLE OPTIONS   #####################
 ###########################################################################
 
-TARGET=mame
-SUBTARGET=mame
+ifndef TARGET
+TARGET = mame
+endif
+
+ifndef SUBTARGET
+SUBTARGET = $(TARGET)
+endif
+
+#TARGET=mame
+#SUBTARGET=mame
 OSD=retro
 
 
