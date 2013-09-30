@@ -138,6 +138,7 @@ LDFLAGSEMULATOR +=  -stdlib=libc++
    LD = c++ -stdlib=libc++
    NATIVELD = c++ -stdlib=libc++
    NATIVECC = c++
+LDFLAGS +=  $(fpic) $(SHARED)
    CC_AS = clang
    AR = @ar
    PYTHON ?= @python
