@@ -40,6 +40,10 @@ DEFS = -DCRLF=2 -DDISABLE_MIDI=1
 # Default to something reasonable for all platforms
 ARFLAGS = -cr
 
+ifeq ($(TARGET),)
+TARGET = mame
+endif
+
 TARGET_NAME := $(TARGET)
 EXE = 
 LIBS = 
