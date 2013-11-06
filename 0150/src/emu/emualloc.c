@@ -292,21 +292,20 @@ void resource_pool::add(resource_pool_item &item)
 
 	// fetch the ID of this item's pointer; some implementations put hidden data
 	// before, so if we don't find it, check 4 bytes ahead
-#ifndef RETRO_AND
+
 	memory_entry *entry = memory_entry::find(item.m_ptr);
 	if (entry == NULL)
-		entry = memory_entry::find(reinterpret_cast<UINT8 *>(item.m_ptr) - sizeof(size_t));
+#ifdef USE_ARM_HACK
+        entry = memory_entry::find(reinterpret_cast<UINT8 *>(item.m_ptr) - 8);
 #else
-	resource_pool_item *entry = resource_pool::find(item.m_ptr);
-	if (entry == NULL)
-		entry = resource_pool::find(reinterpret_cast<UINT8 *>(item.m_ptr) - sizeof(size_t));
+		entry = memory_entry::find(reinterpret_cast<UINT8 *>(item.m_ptr) - sizeof(size_t));
 #endif
 	assert(entry != NULL);
 	item.m_id = entry->m_id;
-#ifndef RETRO_AND
+
 	if (LOG_ALLOCS)
 		fprintf(stderr, "#%06d, add %d bytes (%s:%d)\n", (UINT32)entry->m_id, static_cast<UINT32>(entry->m_size), entry->m_file, (int)entry->m_line);
-#endif
+
 	// find the entry to insert after
 	resource_pool_item *insert_after;
 	for (insert_after = m_ordered_tail; insert_after != NULL; insert_after = insert_after->m_ordered_prev)
