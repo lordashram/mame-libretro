@@ -37,6 +37,7 @@ empty
 
 #endif
 
+#ifndef RETRO_AND
 #define mul_32x32(a, b) ((INT64)a * (INT64)b)
 #define mulu_32x32(a, b) ((UINT64)a * (UINT64)b)
 #define mul_32x32_hi(a, b) ((UINT32)(((INT64)a * (INT64)b) >> 32))
@@ -55,6 +56,7 @@ empty
 #define atomic_increment32(ptr) (atomic_add32(ptr, 1))
 #define atomic_decrement32(ptr) (atomic_add32(ptr, -1))
 #define get_profile_ticks() (osd_ticks())
+#endif
 
 #include "eminline.h"
 

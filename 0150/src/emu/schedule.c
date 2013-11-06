@@ -49,8 +49,6 @@
 
 #define LOG(x)  do { if (VERBOSE) logerror x; } while (0)
 
-
-
 //**************************************************************************
 //  CONSTANTS
 //**************************************************************************
@@ -487,10 +485,10 @@ void device_scheduler::timeslice()
 				// if we have enough for at least 1 cycle, do the math
 				if (delta >= exec->m_attoseconds_per_cycle)
 				{
+
 					// compute how many cycles we want to execute
 					int ran = exec->m_cycles_running = divu_64x32((UINT64)delta >> exec->m_divshift, exec->m_divisor);
 					LOG(("  cpu '%s': %d cycles\n", exec->device().tag(), exec->m_cycles_running));
-
 					// if we're not suspended, actually execute
 					if (exec->m_suspend == 0)
 					{
