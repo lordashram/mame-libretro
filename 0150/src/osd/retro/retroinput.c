@@ -72,12 +72,12 @@ static void initInput(running_machine &machine)
 	// our faux keyboard only has a couple of keys (corresponding to the
 	// common defaults)
 
-   fprintf(stderr, "SOURCE FILE: %s\n", machine.system().source_file);
-   fprintf(stderr, "PARENT: %s\n", machine.system().parent);
-   fprintf(stderr, "NAME: %s\n", machine.system().name);
-   fprintf(stderr, "DESCRIPTION: %s\n", machine.system().description);
-   fprintf(stderr, "YEAR: %s\n", machine.system().year);
-   fprintf(stderr, "MANUFACTURER: %s\n", machine.system().manufacturer);
+   LOGI( "SOURCE FILE: %s\n", machine.system().source_file);
+   LOGI( "PARENT: %s\n", machine.system().parent);
+   LOGI( "NAME: %s\n", machine.system().name);
+   LOGI( "DESCRIPTION: %s\n", machine.system().description);
+   LOGI( "YEAR: %s\n", machine.system().year);
+   LOGI( "MANUFACTURER: %s\n", machine.system().manufacturer);
 
 	P1_state[KEY_TAB]        = 0;//RETRO_DEVICE_ID_JOYPAD_R2
 	P1_state[KEY_ENTER]      = 0;//RETRO_DEVICE_ID_JOYPAD_L2

@@ -363,6 +363,7 @@ device_t &running_machine::add_dynamic_device(device_t &owner, device_type type,
 	return *device;
 }
 
+#include "log.h"
 
 //-------------------------------------------------
 //  run - execute the machine
@@ -435,6 +436,7 @@ int running_machine::run(bool firstrun)
 	}
 	catch (emu_fatalerror &fatal)
 	{
+LOGI("%s\n", fatal.string());
 		mame_printf_error("%s\n", fatal.string());
 		error = MAMERR_FATALERROR;
 		if (fatal.exitcode() != 0)
@@ -442,21 +444,25 @@ int running_machine::run(bool firstrun)
 	}
 	catch (emu_exception &)
 	{
+LOGI("Caught unhandled emulator exception\n");
 		mame_printf_error("Caught unhandled emulator exception\n");
 		error = MAMERR_FATALERROR;
 	}
 	catch (binding_type_exception &btex)
 	{
+LOGI("Error performing a late bind of type %s to %s\n", btex.m_actual_type.name(), btex.m_target_type.name());
 		mame_printf_error("Error performing a late bind of type %s to %s\n", btex.m_actual_type.name(), btex.m_target_type.name());
 		error = MAMERR_FATALERROR;
 	}
 	catch (std::exception &ex)
 	{
+LOGI("Caught unhandled %s exception: %s\n", typeid(ex).name(), ex.what());
 		mame_printf_error("Caught unhandled %s exception: %s\n", typeid(ex).name(), ex.what());
 		error = MAMERR_FATALERROR;
 	}
 	catch (...)
 	{
+LOGI("Caught unhandled exception\n");
 		mame_printf_error("Caught unhandled exception\n");
 		error = MAMERR_FATALERROR;
 	}
