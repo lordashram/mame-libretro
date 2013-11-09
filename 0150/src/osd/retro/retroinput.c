@@ -348,12 +348,10 @@ static void initInput(running_machine &machine)
    else
    if (
          (core_stricmp(machine.system().name, "kinst") == 0) ||
-         (core_stricmp(machine.system().parent, "kinst") == 0) ||
-         (core_stricmp(machine.system().name, "kinst2") == 0) ||
-         (core_stricmp(machine.system().parent, "kinst2") == 0)
+         (core_stricmp(machine.system().parent, "kinst") == 0)
          )
    {
-      /* Killer Instinct 1/2 */
+      /* Killer Instinct 1 */
       input_device_item_add_p1(P1_device, "RetroPad P1 L", &P1_state[KEY_BUTTON_5], ITEM_ID_LCONTROL, pad1_get_state);
       input_device_item_add_p1(P1_device, "RetroPad P1 Y", &P1_state[KEY_BUTTON_4], ITEM_ID_LALT, pad1_get_state);
       input_device_item_add_p1(P1_device, "RetroPad P1 X", &P1_state[KEY_BUTTON_3], ITEM_ID_SPACE, pad1_get_state);
@@ -367,6 +365,27 @@ static void initInput(running_machine &machine)
       input_device_item_add_p2(P2_device, "RetroPad P2 R", &P2_state[KEY_BUTTON_6], ITEM_ID_W, pad2_get_state);
       input_device_item_add_p2(P2_device, "RetroPad P2 B", &P2_state[KEY_BUTTON_2], ITEM_ID_I, pad2_get_state);
       input_device_item_add_p2(P2_device, "RetroPad P2 A", &P2_state[KEY_BUTTON_1], ITEM_ID_K, pad2_get_state);
+   }
+   else
+   if (
+         (core_stricmp(machine.system().name, "kinst2") == 0) ||
+         (core_stricmp(machine.system().parent, "kinst2") == 0)
+         )
+   {
+      /* Killer Instinct 2 */
+      input_device_item_add_p1(P1_device, "RetroPad P1 L", &P1_state[KEY_BUTTON_5], ITEM_ID_LCONTROL, pad1_get_state);
+      input_device_item_add_p1(P1_device, "RetroPad P1 Y", &P1_state[KEY_BUTTON_4], ITEM_ID_LALT, pad1_get_state);
+      input_device_item_add_p1(P1_device, "RetroPad P1 X", &P1_state[KEY_BUTTON_3], ITEM_ID_SPACE, pad1_get_state);
+      input_device_item_add_p1(P1_device, "RetroPad P1 B", &P1_state[KEY_BUTTON_2], ITEM_ID_LSHIFT, pad1_get_state);
+      input_device_item_add_p1(P1_device, "RetroPad P1 A", &P1_state[KEY_BUTTON_1], ITEM_ID_Z, pad1_get_state);
+      input_device_item_add_p1(P1_device, "RetroPad P1 R", &P1_state[KEY_BUTTON_6], ITEM_ID_X, pad1_get_state);
+
+      input_device_item_add_p2(P2_device, "RetroPad P2 L", &P2_state[KEY_BUTTON_5], ITEM_ID_A, pad2_get_state);
+      input_device_item_add_p2(P2_device, "RetroPad P2 Y", &P2_state[KEY_BUTTON_4], ITEM_ID_S, pad2_get_state);
+      input_device_item_add_p2(P2_device, "RetroPad P2 X", &P2_state[KEY_BUTTON_3], ITEM_ID_Q, pad2_get_state);
+      input_device_item_add_p2(P2_device, "RetroPad P2 B", &P2_state[KEY_BUTTON_2], ITEM_ID_W, pad2_get_state);
+      input_device_item_add_p2(P2_device, "RetroPad P2 A", &P2_state[KEY_BUTTON_1], ITEM_ID_I, pad2_get_state);
+      input_device_item_add_p2(P2_device, "RetroPad P2 R", &P2_state[KEY_BUTTON_6], ITEM_ID_K, pad2_get_state);
    }
    else
    if ((core_stricmp(machine.system().name, "tektagt") == 0) ||
