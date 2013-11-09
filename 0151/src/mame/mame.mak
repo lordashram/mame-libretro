@@ -2045,6 +2045,7 @@ $(MAMEOBJ)/misc.a: \
 	$(DRIVERS)/carrera.o \
 	$(DRIVERS)/castle.o \
 	$(DRIVERS)/cave.o $(VIDEO)/cave.o \
+	$(DRIVERS)/cavesh3.o \
 	$(DRIVERS)/cavepc.o \
 	$(DRIVERS)/cb2001.o \
 	$(DRIVERS)/cdi.o $(VIDEO)/mcd212.o $(MACHINE)/cdi070.o $(MACHINE)/cdislave.o $(MACHINE)/cdicdic.o \
@@ -2340,6 +2341,8 @@ $(DRIVERS)/bfm_sc4h.o:  $(LAYOUT)/bfm_sc4.lh \
 $(DRIVERS)/bfm_sc5.o:   $(LAYOUT)/bfm_sc5.lh
 
 $(DRIVERS)/bfmsys85.o:  $(LAYOUT)/bfmsys85.lh
+
+$(DRIVERS)/cavesh3.o:  $(MAMESRC)/drivers/csh3blit.c
 
 $(DRIVERS)/blockade.o:  $(LAYOUT)/blockade.lh
 
