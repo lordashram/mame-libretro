@@ -52,6 +52,20 @@ struct quad_setup_data
    INT32           endx, endy;
 };
 
+#ifndef M16B
+
+#define SRC_SHIFT_R  0
+#define SRC_SHIFT_G  0
+#define SRC_SHIFT_B  0
+
+#define DST_SHIFT_R 16
+#define DST_SHIFT_G 8
+#define DST_SHIFT_B 0
+
+#define PIXEL_TYPE UINT32
+
+#else
+
 #define SRC_SHIFT_R  3
 #define SRC_SHIFT_G  2
 #define SRC_SHIFT_B  3
@@ -61,6 +75,8 @@ struct quad_setup_data
 #define DST_SHIFT_B 0
 
 #define PIXEL_TYPE UINT16
+
+#endif
 
 // destination pixels are written based on the values of the template parameters
 #define dest_assemble_rgb(r, g, b) ((r << DST_SHIFT_R) | (g << DST_SHIFT_G) | (b << DST_SHIFT_B))

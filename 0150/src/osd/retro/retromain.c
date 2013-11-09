@@ -15,20 +15,13 @@
 
 char g_rom_dir[1024];
 
-#define FUNC_PREFIX(x)		rgb888_##x
-#define PIXEL_TYPE			UINT32
-#define SRCSHIFT_R			0
-#define SRCSHIFT_G			0
-#define SRCSHIFT_B			0
-#define DSTSHIFT_R			16
-#define DSTSHIFT_G			8
-#define DSTSHIFT_B			0
+#define M16B
 
 #include "retrorender.c"
 
 static bool mouse_enable = false;
 static bool videoapproach1_enable = false;
-bool nagscreenpatch_enable = false;
+bool nagscreenpatch_enable = false; //TODO IN  0151
 
 static void extract_basename(char *buf, const char *path, size_t size)
 {
@@ -164,6 +157,9 @@ static const char* xargv[] = {
 	"1.0",
 	"-gamma",
 	"1.0",
+#ifdef USE_ARM_HACK
+	"-nodrc",
+#endif
 	"-rompath",
 	NULL,
 	NULL,

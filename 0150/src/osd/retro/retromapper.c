@@ -7,8 +7,6 @@ char RPATH[512];
 extern "C" int mmain(int argc, const char *argv);
 extern bool draw_this_frame;
 
-#define M16B
-
 #ifdef M16B
 	uint16_t videoBuffer[1024*1024];
 	#define PITCH 1
@@ -94,7 +92,7 @@ unsigned retro_api_version(void)
 void retro_get_system_info(struct retro_system_info *info)
 {   	
    memset(info, 0, sizeof(*info));
-   info->library_name = "MAME 2013 0.150";
+   info->library_name = "MAME 0.150";
    info->library_version = "0.150";
    info->valid_extensions = "zip|chd|7z";
    info->need_fullpath = true;   
@@ -106,15 +104,9 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
    info->geometry.base_width = 640;
    info->geometry.base_height =480;
 
-//#ifndef RETRO_AND 
    info->geometry.max_width = 1024;
    info->geometry.max_height = 768;
-/*
-#else    	
-   info->geometry.max_width =  640;
-   info->geometry.max_height = 480;
-#endif
-*/
+
    info->geometry.aspect_ratio =4/3;
    info->timing.fps = 60;
    info->timing.sample_rate = 48000.0;
