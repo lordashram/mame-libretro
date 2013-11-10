@@ -157,9 +157,6 @@ static const char* xargv[] = {
 	"1.0",
 	"-gamma",
 	"1.0",
-#ifdef USE_ARM_HACK
-	"-nodrc",
-#endif
 	"-rompath",
 	NULL,
 	NULL,
