@@ -194,6 +194,9 @@ static void keyboard_cb(bool down, unsigned keycode, uint32_t character, uint16_
    printf( "Down: %s, Code: %d, Char: %u, Mod: %u. \n",
          down ? "yes" : "no", keycode, character, mod);
 #endif
+
+   ui_ipt_pushchar=-1;
+
    if (keycode>=320);
    else
    {
@@ -207,8 +210,10 @@ static void keyboard_cb(bool down, unsigned keycode, uint32_t character, uint16_
       }
       else if(keycode!=RETROK_LSHIFT)
       {
-         if (down)
+         if (down){
             retrokbd_state[keycode]=1;	
+	    ui_ipt_pushchar=keycode;
+	}
          else if (!down)
             retrokbd_state[keycode]=0;
       }

@@ -121,6 +121,11 @@ void mini_osd_interface::update(bool skip_redraw)
       // get the list of primitives for the target at the current size
       render_primitive_list &primlist = our_target->get_primitives();
 
+      if(ui_ipt_pushchar!=-1){
+	ui_input_push_char_event(machine(), our_target, (unicode_char)ui_ipt_pushchar);
+	ui_ipt_pushchar=-1;
+      }
+
       // lock them, and then render them
       primlist.acquire_lock();
 

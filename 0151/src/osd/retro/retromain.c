@@ -13,6 +13,8 @@
 
 #include "log.h"
 
+static int ui_ipt_pushchar=-1;
+
 char g_rom_dir[1024];
 
 #define M16B
