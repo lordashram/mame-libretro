@@ -188,44 +188,9 @@ void prep_retro_rotation(int rot)
    environ_cb(RETRO_ENVIRONMENT_SET_ROTATION, &rot);
 }
 
-static void keyboard_cb(bool down, unsigned keycode, uint32_t character, uint16_t mod)
-{
-#ifdef KEYDBG
-   printf( "Down: %s, Code: %d, Char: %u, Mod: %u. \n",
-         down ? "yes" : "no", keycode, character, mod);
-#endif
-
-   ui_ipt_pushchar=-1;
-
-   if (keycode>=320);
-   else
-   {
-      if(down && keycode==RETROK_LSHIFT)
-      {
-         SHIFTON=-SHIFTON;					
-         if(SHIFTON == 1)
-            retrokbd_state[keycode]=1;
-         else
-            retrokbd_state[keycode]=0;	
-      }
-      else if(keycode!=RETROK_LSHIFT)
-      {
-         if (down){
-            retrokbd_state[keycode]=1;	
-	    ui_ipt_pushchar=keycode;
-	}
-         else if (!down)
-            retrokbd_state[keycode]=0;
-      }
-   }
-}
-
 bool retro_load_game(const struct retro_game_info *info) 
 {
-	struct retro_keyboard_callback cb = { keyboard_cb };
-   environ_cb(RETRO_ENVIRONMENT_SET_KEYBOARD_CALLBACK, &cb);
-
-   check_variables();
+	check_variables();
 
 #ifdef M16B
 	memset(videoBuffer,0,1024*1024*2);
@@ -243,9 +208,9 @@ bool retro_load_game(const struct retro_game_info *info)
 void retro_unload_game(void)
 {
 	if(pauseg==0)
-   {
+   	{
 		pauseg=-1;				
-      co_switch(emuThread);
+      		co_switch(emuThread);
 	}
 
 	LOGI("Retro unload_game\n");	
