@@ -92,7 +92,7 @@ unsigned retro_api_version(void)
 void retro_get_system_info(struct retro_system_info *info)
 {   	
    memset(info, 0, sizeof(*info));
-   info->library_name = "MAME 0.151";
+   info->library_name = "MAME 2013";
    info->library_version = "0.151";
    info->valid_extensions = "zip|chd|7z";
    info->need_fullpath = true;   
