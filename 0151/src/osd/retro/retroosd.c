@@ -23,8 +23,8 @@ void mini_osd_interface::osd_exit(running_machine &machine)
 {	
 	write_log("osd_exit called \n");
 
-	global_free(P1_device);
-	global_free(P2_device);
+	global_free(joy0_device);
+	global_free(joy1_device);
 	global_free(retrokbd_device);
 	global_free(mouse_device);
 }

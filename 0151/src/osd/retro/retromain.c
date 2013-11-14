@@ -61,28 +61,7 @@ static void extract_directory(char *buf, const char *path, size_t size)
 //============================================================
 //  CONSTANTS
 //============================================================
-
-// fake a keyboard mapped to retro joypad 
-enum
-{
-	KEY_TAB,
-	KEY_ENTER,
-	KEY_START,
-	KEY_COIN,
-	KEY_BUTTON_1,
-	KEY_BUTTON_2,
-	KEY_BUTTON_3,
-	KEY_BUTTON_4,
-	KEY_BUTTON_5,
-	KEY_BUTTON_6, 
-	KEY_JOYSTICK_U,
-	KEY_JOYSTICK_D,
-	KEY_JOYSTICK_L,
-	KEY_JOYSTICK_R,
-	KEY_F11,
-	KEY_F3,
-	KEY_TOTAL
-}; 
+#define MAX_BUTTONS         16
 
 #ifdef DEBUG_LOG
 # define LOG(msg) fprintf(stderr, "%s\n", msg)
@@ -98,21 +77,19 @@ enum
 static render_target *our_target = NULL;
 
 // input device
-static input_device *P1_device; // P1 JOYPAD
-static input_device *P2_device; // P2 JOYPAD
 static input_device *retrokbd_device; // KEYBD
 static input_device *mouse_device;    // MOUSE
+static input_device *joy0_device;    // JOY0
+static input_device *joy1_device;    // JOY1
 
 // state 
-static UINT16 P1_state[KEY_TOTAL];
-static UINT16 P2_state[KEY_TOTAL];
 static UINT16 retrokbd_state[RETROK_LAST];
 static int mouseLX,mouseLY;
 static int mouseBUT[4];
-static int mouse_enabled; 
-
-int optButtonLayoutP1 = 0; //for player 1
-int optButtonLayoutP2 = 0; //for player 2
+static UINT16 joy0_bstate[MAX_BUTTONS];
+int joy0_a1[2] = { 0, 0 }, joy0_a2[2] = { 0, 0 };
+static UINT16 joy1_bstate[MAX_BUTTONS];
+int joy1_a1[2] = { 0, 0 }, joy1_a2[2] = { 0, 0 };
 
 //enables / disables tate mode
 static int tate = 0;
