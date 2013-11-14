@@ -215,8 +215,8 @@ static void initInput(running_machine &machine)
 	input_device_item_add_j1 (joy0_device,"PR", &joy0_bstate[RETROPAD_PAD_RIGHT],(input_item_id)(ITEM_ID_BUTTON1+11),generic_joybutton_get_state );
 	input_device_item_add_j1 (joy0_device,"L3", &joy0_bstate[RETROPAD_L3],(input_item_id)(ITEM_ID_BUTTON1+12),generic_joybutton_get_state );
 	input_device_item_add_j1 (joy0_device,"R3", &joy0_bstate[RETROPAD_R3],(input_item_id)(ITEM_ID_BUTTON1+13),generic_joybutton_get_state );
-	input_device_item_add_j1 (joy0_device,"START", &joy0_bstate[RETROPAD_START],(input_item_id)(ITEM_ID_BUTTON1+14),generic_joybutton_get_state );
-	input_device_item_add_j1 (joy0_device,"SLECT", &joy0_bstate[RETROPAD_SELECT],(input_item_id)(ITEM_ID_BUTTON1+15),generic_joybutton_get_state );
+	input_device_item_add_j1 (joy0_device,"START", &joy0_bstate[RETROPAD_START],ITEM_ID_START,generic_joybutton_get_state );
+	input_device_item_add_j1 (joy0_device,"SLECT", &joy0_bstate[RETROPAD_SELECT],ITEM_ID_SELECT,generic_joybutton_get_state );
 	
 	//JOY1
 	joy1_device=machine.input().device_class(DEVICE_CLASS_JOYSTICK).add_device("Joy1");
@@ -241,8 +241,8 @@ static void initInput(running_machine &machine)
 	input_device_item_add_j2 (joy1_device,"PR", &joy1_bstate[RETROPAD_PAD_RIGHT],(input_item_id)(ITEM_ID_BUTTON1+11),generic_joybutton_get_state );
 	input_device_item_add_j2 (joy1_device,"L3", &joy1_bstate[RETROPAD_L3],(input_item_id)(ITEM_ID_BUTTON1+12),generic_joybutton_get_state );
 	input_device_item_add_j2 (joy1_device,"R3", &joy1_bstate[RETROPAD_R3],(input_item_id)(ITEM_ID_BUTTON1+13),generic_joybutton_get_state );
-	input_device_item_add_j2 (joy1_device,"START", &joy1_bstate[RETROPAD_START],(input_item_id)(ITEM_ID_BUTTON1+14),generic_joybutton_get_state );
-	input_device_item_add_j2 (joy1_device,"SLECT", &joy1_bstate[RETROPAD_SELECT],(input_item_id)(ITEM_ID_BUTTON1+15),generic_joybutton_get_state );
+	input_device_item_add_j2 (joy1_device,"START", &joy1_bstate[RETROPAD_START],ITEM_ID_START,generic_joybutton_get_state );
+	input_device_item_add_j2 (joy1_device,"SLECT", &joy1_bstate[RETROPAD_SELECT],ITEM_ID_SELECT,generic_joybutton_get_state );
 
 	//KEYBOARD
 	retrokbd_device = machine.input().device_class(DEVICE_CLASS_KEYBOARD).add_device("Retrokdb");
