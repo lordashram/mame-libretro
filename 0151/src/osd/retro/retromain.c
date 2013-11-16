@@ -81,15 +81,18 @@ static input_device *retrokbd_device; // KEYBD
 static input_device *mouse_device;    // MOUSE
 static input_device *joy0_device;    // JOY0
 static input_device *joy1_device;    // JOY1
-
+#ifdef RETRO_AND
+static input_device *P1_device; // P1 JOYPAD
+static input_device *P2_device; // P2 JOYPAD
+#endif
 // state 
 static UINT16 retrokbd_state[RETROK_LAST];
 static int mouseLX,mouseLY;
 static int mouseBUT[4];
-static UINT16 joy0_bstate[MAX_BUTTONS];
-int joy0_a1[2] = { 0, 0 }, joy0_a2[2] = { 0, 0 };
-static UINT16 joy1_bstate[MAX_BUTTONS];
-int joy1_a1[2] = { 0, 0 }, joy1_a2[2] = { 0, 0 };
+static int joy0_bstate[MAX_BUTTONS];
+static int joy0_a1[2] = { 0, 0 }, joy0_a2[2] = { 0, 0 };
+static int joy1_bstate[MAX_BUTTONS];
+static int joy1_a1[2] = { 0, 0 }, joy1_a2[2] = { 0, 0 };
 
 //enables / disables tate mode
 static int tate = 0;
