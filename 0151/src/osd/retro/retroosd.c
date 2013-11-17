@@ -18,16 +18,14 @@ mini_osd_interface::~mini_osd_interface()
 {
 }
 
-
 void mini_osd_interface::osd_exit(running_machine &machine)
 {	
 	write_log("osd_exit called \n");
-#ifdef RETRO_AND
-	global_free(P1_device);
-	global_free(P2_device);
-#endif
-	global_free(joy0_device);
-	global_free(joy1_device);
+
+	global_free(Pad_device[0]);
+	global_free(Pad_device[1]);
+	global_free(joy_device[0]);
+	global_free(joy_device[1]);
 	global_free(retrokbd_device);
 	global_free(mouse_device);
 }

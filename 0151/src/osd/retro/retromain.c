@@ -73,26 +73,26 @@ static void extract_directory(char *buf, const char *path, size_t size)
 //  GLOBALS
 //============================================================
 
+typedef struct joystate_t {
+	int button[MAX_BUTTONS];
+	int a1[2];
+	int a2[2];
+}Joystate;
+
 // rendering target
 static render_target *our_target = NULL;
 
 // input device
 static input_device *retrokbd_device; // KEYBD
 static input_device *mouse_device;    // MOUSE
-static input_device *joy0_device;    // JOY0
-static input_device *joy1_device;    // JOY1
-#ifdef RETRO_AND
-static input_device *P1_device; // P1 JOYPAD
-static input_device *P2_device; // P2 JOYPAD
-#endif
+static input_device *joy_device[2];// JOY0/JOY1
+static input_device *Pad_device[2];// PAD0/PAD1
+
 // state 
 static UINT16 retrokbd_state[RETROK_LAST];
 static int mouseLX,mouseLY;
 static int mouseBUT[4];
-static int joy0_bstate[MAX_BUTTONS];
-static int joy0_a1[2] = { 0, 0 }, joy0_a2[2] = { 0, 0 };
-static int joy1_bstate[MAX_BUTTONS];
-static int joy1_a1[2] = { 0, 0 }, joy1_a2[2] = { 0, 0 };
+static Joystate joystate[2];
 
 //enables / disables tate mode
 static int tate = 0;
