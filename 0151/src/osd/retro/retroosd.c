@@ -52,7 +52,8 @@ void mini_osd_interface::init(running_machine &machine)
         
 	prep_retro_rotation(gamRot);
 	our_target->compute_minimum_size(rtwi, rthe);
-
+	topw=rtwi;
+	
 	write_log("osd init done\n");
 }
 
@@ -106,7 +107,7 @@ void mini_osd_interface::update(bool skip_redraw)
 
       }
 
-      if (minwidth != rtwi || minheight != rthe ){
+      if (minwidth != rtwi || minheight != rthe || minwidth != topw ){
          write_log("Res change: old(%d,%d) new(%d,%d) %d\n",rtwi,rthe,minwidth,minheight,topw);
          rtwi=minwidth;
          rthe=minheight;
