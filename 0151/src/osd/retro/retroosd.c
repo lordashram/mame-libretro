@@ -51,6 +51,7 @@ void mini_osd_interface::init(running_machine &machine)
         gamRot = (ROT90  == orient) ? 3 : gamRot;
         
 	prep_retro_rotation(gamRot);
+	our_target->compute_minimum_size(rtwi, rthe);
 
 	write_log("osd init done\n");
 }
