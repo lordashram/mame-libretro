@@ -1,6 +1,7 @@
 void retro_poll_mame_input();
 
 static int rtwi=320,rthe=240,topw=1024; // DEFAULT TEXW/TEXH/PITCH
+static float rtaspect=0;
 int SHIFTON=-1;
 char RPATH[512];
 
@@ -9,10 +10,10 @@ extern bool draw_this_frame;
 
 #ifdef M16B
 	uint16_t videoBuffer[1024*1024];
-	#define PITCH 1
+	#define LOG_PIXEL_BYTES 1
 #else
 	unsigned int videoBuffer[1024*1024];
-	#define PITCH 2*1
+	#define LOG_PIXEL_BYTES 2*1
 #endif 
 
 retro_video_refresh_t video_cb = NULL;
@@ -107,7 +108,7 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
    info->geometry.max_width = 1024;
    info->geometry.max_height = 768;
 
-   info->geometry.aspect_ratio =4/3;
+   info->geometry.aspect_ratio =rtaspect;
    info->timing.fps = 60;
    info->timing.sample_rate = 48000.0;
 }
@@ -175,9 +176,9 @@ void retro_run (void)
 	retro_poll_mame_input();
 
 	if (draw_this_frame)
-      		video_cb(videoBuffer,rtwi, rthe, topw << PITCH);
+      		video_cb(videoBuffer,rtwi, rthe, topw << LOG_PIXEL_BYTES);
    	else
-      		video_cb(NULL,rtwi, rthe, topw << PITCH); 
+      		video_cb(NULL,rtwi, rthe, topw << LOG_PIXEL_BYTES);
 
 	co_switch(emuThread);
 }
