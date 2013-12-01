@@ -57,8 +57,10 @@ void mini_osd_interface::init(running_machine &machine)
 	int width,height;
 	our_target->compute_visible_area(1000,1000,1,ROT0,width,height);
 	rtaspect=(float)width/(float)height;
+	write_log("aspect ratio %d/%d=%f\n",width,height,rtaspect);
 
 	write_log("osd init done\n");
+	co_switch(mainThread);
 }
 
 bool draw_this_frame;

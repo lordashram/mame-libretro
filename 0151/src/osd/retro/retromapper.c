@@ -203,6 +203,7 @@ bool retro_load_game(const struct retro_game_info *info)
   	extract_directory(g_rom_dir, info->path, sizeof(g_rom_dir));
 	strcpy(RPATH,info->path);
 
+	co_switch(emuThread);
 	return 1;
 }
 
