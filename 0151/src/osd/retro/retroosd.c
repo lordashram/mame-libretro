@@ -50,15 +50,17 @@ void mini_osd_interface::init(running_machine &machine)
         gamRot = (ROT180 == orient) ? 2 : gamRot;
         gamRot = (ROT90  == orient) ? 3 : gamRot;
         
-	prep_retro_rotation(gamRot);
+	//prep_retro_rotation(gamRot);
 	our_target->compute_minimum_size(rtwi, rthe);
 	topw=rtwi;
 	//Equivalent to rtaspect=our_target->view_by_index((our_target->view()))->effective_aspect(render_layer_config layer_config())
 	int width,height;
 	our_target->compute_visible_area(1000,1000,1,ROT0,width,height);
 	rtaspect=(float)width/(float)height;
+	write_log("aspect ratio %d/%d=%f\n",width,height,rtaspect);
 
 	write_log("osd init done\n");
+	co_switch(mainThread);
 }
 
 bool draw_this_frame;
@@ -107,7 +109,7 @@ void mini_osd_interface::update(bool skip_redraw)
          gamRot = (ROT180 == orient) ? 2 : gamRot;
          gamRot = (ROT90  == orient) ? 3 : gamRot;
 
-         prep_retro_rotation(gamRot);
+         //prep_retro_rotation(gamRot);
 
       }
 
