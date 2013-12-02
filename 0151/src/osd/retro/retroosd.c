@@ -50,7 +50,7 @@ void mini_osd_interface::init(running_machine &machine)
         gamRot = (ROT180 == orient) ? 2 : gamRot;
         gamRot = (ROT90  == orient) ? 3 : gamRot;
         
-	prep_retro_rotation(gamRot);
+	//prep_retro_rotation(gamRot);
 	our_target->compute_minimum_size(rtwi, rthe);
 	topw=rtwi;
 	//Equivalent to rtaspect=our_target->view_by_index((our_target->view()))->effective_aspect(render_layer_config layer_config())
@@ -109,7 +109,7 @@ void mini_osd_interface::update(bool skip_redraw)
          gamRot = (ROT180 == orient) ? 2 : gamRot;
          gamRot = (ROT90  == orient) ? 3 : gamRot;
 
-         prep_retro_rotation(gamRot);
+         //prep_retro_rotation(gamRot);
 
       }
 
