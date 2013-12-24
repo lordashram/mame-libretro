@@ -117,6 +117,7 @@ else
 PLATCFLAGS += -DLSB_FIRST
 endif
 else ifeq ($(platform), android)
+armplatform := 1
    TARGETLIB := $(TARGET_NAME)_libretro.so
 	TARGETOS=linux  
    fpic := -fPIC
@@ -168,13 +169,24 @@ else
 	PLATCFLAGS += -DLSB_FIRST
 endif
 else ifeq ($(platform), ios)
+	armplatform := 1
+	FORCE_DRC_C_BACKEND = 1
    TARGETLIB := $(TARGET_NAME)_libretro_ios.dylib
    fpic := -fPIC
    SHARED := -dynamiclib
+   TARGETOS = macosx
 
+   CC_AS = clang -arch armv7 -isysroot $(IOSSDK)
    CC = clang++ -arch armv7 -isysroot $(IOSSDK)
-   CFLAGS += -DIOS
+   LD = $(CC) -stdlib=libc++
+   NATIVELD = clang++ -stdlib=libc++ -arch armv7 -isysroot $(IOSSDK)
+   NATIVECC = clang++ -stdlib=libc++ -arch armv7 -isysroot $(IOSSDK)
+   PYTHON ?= @python
+   CFLAGS += -DIOS 
+   PLATCFLAGS += -DSDLMAME_NO64BITIO -DIOS -DUSE_ARM_HACK -DHAVE_POSIX_MEMALIGN
+	CCOMFLAGS += $(PLATCFLAGS) -ffast-math  
 else ifeq ($(platform), qnx)
+	armplatform := 1
    TARGETLIB := $(TARGET_NAME)_libretro_qnx.so
 	TARGETOS=linux  
    fpic := -fPIC
@@ -240,6 +252,7 @@ else ifeq ($(platform), wii)
 	BIGENDIAN=1
 	LIBS += -lstdc++ -lpthread
 else ifneq (,$(findstring armv,$(platform)))
+	armplatform := 1
    TARGETLIB := $(TARGET_NAME)_libretro.so
    SHARED := -shared -Wl,--no-undefined
    fpic := -fPIC
@@ -760,7 +773,7 @@ $(EMULATOR): $(EMUINFOOBJ) $(DRIVLISTOBJ) $(DRVLIBS) $(LIBOSD) $(LIBOPTIONAL) $(
 # generic rules
 #-------------------------------------------------
 
-ifeq ($(platform), android)
+ifeq ($(armplatform), 1)
 $(LIBCOOBJ)/armeabi_asm.o:
 	$(CC_AS) -c $(SRC)/osd/$(OSD)/libco/armeabi_asm.S -o $(LIBCOOBJ)/armeabi_asm.o
 endif

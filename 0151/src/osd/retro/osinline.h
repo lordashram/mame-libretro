@@ -26,15 +26,11 @@ empty
 #define _osd_exchange64(ptr, exchange) (register INT64 ret; __asm__ __volatile__ ("1: ldarx  %[ret], 0, %[ptr]      \n""   stdcx. %[exchange], 0, %[ptr] \n""   bne-   1b                     \n": [ret]      "=&r" (ret): [ptr]      "r"   (ptr), [exchange] "r"   (exchange): "cr0"); ret)
 #define osd_exchange64 _osd_exchange64
 #endif /* __ppc64__ || __PPC64__ */
-
-#endif
-
-#ifdef RETRO_AND
+#else
 #ifndef YieldProcessor
 #define YieldProcessor() do {} while (0)
 #define osd_yield_processor() YieldProcessor()
 #endif
-
 #endif
 
 #ifndef RETRO_AND
