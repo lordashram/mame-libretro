@@ -179,8 +179,8 @@ else ifeq ($(platform), ios)
    CC_AS = clang -arch armv7 -isysroot $(IOSSDK)
    CC = clang++ -arch armv7 -isysroot $(IOSSDK)
    LD = $(CC) -stdlib=libc++
-   NATIVELD = clang++ -stdlib=libc++ -arch armv7 -isysroot $(IOSSDK)
-   NATIVECC = clang++ -stdlib=libc++ -arch armv7 -isysroot $(IOSSDK)
+   NATIVELD = c++ -stdlib=libc++
+   NATIVECC = c++
    PYTHON ?= @python
    CFLAGS += -DIOS 
    PLATCFLAGS += -DSDLMAME_NO64BITIO -DIOS -DUSE_ARM_HACK -DHAVE_POSIX_MEMALIGN
@@ -738,8 +738,16 @@ tests: $(REGTESTS)
 $(sort $(OBJDIRS)):
 	$(MD) -p $@
 
+BUILDTOOLS_CUSTOM = 0
+
 ifeq ($(platform), android)
+BUILDTOOLS_CUSTOM = 1
+else ifeq ($(platform), ios)
+BUILDTOOLS_CUSTOM = 1
+endif
+
 ifeq ($(NATIVE),0)
+ifeq ($(BUILDTOOLS_CUSTOM),1)
 $(OBJ)/build/file2str:
 	mkdir -p $(OBJ)/build
 	cp -R prec-build/file2str $(OBJ)/build 
