@@ -89,8 +89,8 @@ ifeq ($(platform), unix)
 	TARGETOS=linux  
    fpic := -fPIC
    SHARED := -shared -Wl,--version-script=src/osd/retro/link.T
-	CCOMFLAGS += -fPIC -fsigned-char -finline  -fno-common -fno-builtin -fweb -frename-registers -falign-functions=16 -fsingle-precision-constant
-	PLATCFLAGS += -DRETRO -DALIGN_INTS -DALIGN_SHORTS -fstrict-aliasing -fno-merge-constants 
+	CCOMFLAGS += $(fpic) -fsigned-char -finline  -fno-common -fno-builtin -fweb -frename-registers -falign-functions=16 -fsingle-precision-constant
+	PLATCFLAGS += -DRETRO -DALIGN_INTS -DALIGN_SHORTS -fstrict-aliasing -fno-merge-constants  $(fpic)
 	LDFLAGS +=  $(fpic) $(SHARED)
 	NATIVELD = g++
 	NATIVELDFLAGS = -Wl,--warn-common -lstdc++
@@ -140,8 +140,9 @@ armplatform := 1
 else ifeq ($(platform), osx)
    TARGETLIB := $(TARGET_NAME)_libretro.dylib
 	TARGETOS = macosx
-   fpic := -fPIC
+   fpic := -fPIC -mmacosx-version-min=10.7
 LDFLAGSEMULATOR +=  -stdlib=libc++
+PLATCFLAGS += $(fpic)
    SHARED := -dynamiclib
    CC = c++ -stdlib=libc++
    LD = c++ -stdlib=libc++
