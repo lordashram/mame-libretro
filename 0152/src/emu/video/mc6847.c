@@ -220,8 +220,11 @@ void mc6847_friend_device::device_post_load(void)
 //-------------------------------------------------
 //  update_field_sync_timer
 //-------------------------------------------------
-
+#ifdef WIN32
+ATTR_FORCE_INLINE void mc6847_friend_device::update_field_sync_timer(void)
+#else
 inline ATTR_FORCE_INLINE void mc6847_friend_device::update_field_sync_timer(void)
+#endif
 {
 	// are we expecting field sync?
 	bool expected_field_sync = (m_physical_scanline < m_field_sync_falling_edge_scanline)
