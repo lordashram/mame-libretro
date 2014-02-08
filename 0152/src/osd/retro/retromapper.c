@@ -5,6 +5,8 @@ static float rtaspect=0;
 int SHIFTON=-1;
 char RPATH[512];
 
+char *retro_save_directory;
+
 extern "C" int mmain(int argc, const char *argv);
 extern bool draw_this_frame;
 
@@ -139,6 +141,16 @@ void retro_init (void){
 #else
     	enum retro_pixel_format fmt = RETRO_PIXEL_FORMAT_RGB565;
 #endif
+
+   char dir[1024];
+
+   
+   if (environ_cb(RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY, &dir))
+   {
+	  // If save directory is defined use it, otherwise use system directory
+      sprintf(retro_save_directory, "%s", dir);
+	  printf(retro_save_directory);
+   }
 
     	if (!environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &fmt))
     	{

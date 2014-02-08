@@ -17,6 +17,13 @@ static int ui_ipt_pushchar=-1;
 
 char g_rom_dir[1024];
 
+#ifdef _WIN32
+char slash = '\\';
+#else
+char slash = '/';
+#endif
+
+
 #define M16B
 
 #include "retrorender.c"
@@ -42,6 +49,7 @@ static void extract_basename(char *buf, const char *path, size_t size)
    char *ext = strrchr(buf, '.');
    if (ext)
       *ext = '\0';
+
 }
 
 static void extract_directory(char *buf, const char *path, size_t size)
@@ -140,6 +148,7 @@ static const char* xargv[] = {
 	"-gamma",
 	"1.0",
 	"-rompath",
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -257,12 +266,15 @@ int executeGame(char* path) {
 	}
 
 	write_log("creating frontend... game=%s\n", MgameName);
+	write_log("savedir:%s\n", retro_save_directory);
 
 	//find how many parameters we have
-	for (paramCount = 0; xargv[paramCount] != NULL; paramCount++);
- 
+	for (paramCount = 0; xargv[paramCount] != NULL; paramCount++)
+		write_log("parameter:%s\n", xargv[paramCount]);
+	
 	xargv[paramCount++] = (char*)g_rom_dir;
-
+	write_log("parameter:%s\n", xargv[paramCount]);	
+	
 	if (tate) {
 		if (screenRot == 3) {
 			xargv[paramCount++] =(char*) "-rol";
@@ -276,8 +288,19 @@ int executeGame(char* path) {
 			xargv[paramCount++] = (char*)(screenRot ? "-ror" : "-mouse");
 		}
 	}
+	write_log("parameter:%s\n", xargv[paramCount]);
 
 	xargv[paramCount++] = MgameName;
+	write_log("parameter:%s\n", xargv[paramCount]);
+	
+	xargv[paramCount++] = "-cfg_directory";
+	write_log("parameter:%s\n", xargv[paramCount]);
+	
+	char *dir;
+	sprintf(dir, "%s%c%s", retro_save_directory, slash, "mame\cfg");
+	
+	xargv[paramCount++] = (char*)dir;
+	write_log("parameter:%s\n", xargv[paramCount]);
 
 	write_log("executing frontend... params:%i\n", paramCount);
 
