@@ -278,17 +278,19 @@ int executeGame(char* path) {
 	//find how many parameters we have
 	for (paramCount = 0; xargv[paramCount] != NULL; paramCount++)
 	printf("args: %s\n", xargv[paramCount]);
-	printf("debug: %s\n");
-    printf("args: %s\n", g_rom_dir);
+  
 	xargv[paramCount++] = (char*)g_rom_dir;
+	printf("args: %s\n", xargv[paramCount]);
 
 
-	xargv[paramCount++] = "-cfg_directory";
+	xargv[paramCount++] = (char*)("-cfg_directory");
+	printf("args: %s\n", xargv[paramCount]);
 
-	
-	char *cfg_dir;
-	sprintf(cfg_dir, "%s%c%s", retro_save_directory, slash, "mame\cfg");
-
+	char cfg_dir[256];
+	sprintf(cfg_dir, "%s%c%s%c%s", retro_save_directory, slash, "mame", slash, "cfg");
+	printf("cfgdir: %s\n", cfg_dir);
+	xargv[paramCount++] = (char*)(cfg_dir);
+	printf("args: %s\n", xargv[paramCount]);
 
 	if (tate) {
 		if (screenRot == 3) {

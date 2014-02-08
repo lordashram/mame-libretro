@@ -60,9 +60,9 @@ LIBS =
 # start with empties for everything
 PTR64=1
 CCOMFLAGS = -DDISABLE_MIDI
-CONLYFLAGS = -fpermissive
+CONLYFLAGS = -fpermissive -g
 COBJFLAGS =
-CPPONLYFLAGS = -fpermissive
+CPPONLYFLAGS = -fpermissive -g
 # LDFLAGS are used generally; LDFLAGSEMULATOR are additional
 # flags only used when linking the core emulator
 LDFLAGS =
