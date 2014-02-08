@@ -142,14 +142,16 @@ void retro_init (void){
     	enum retro_pixel_format fmt = RETRO_PIXEL_FORMAT_RGB565;
 #endif
 
-   char dir[1024];
+   const char *dir = NULL;
 
    
-   if (environ_cb(RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY, &dir))
+   if (environ_cb(RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY, &dir) && dir)
    {
 	  // If save directory is defined use it, otherwise use system directory
-      sprintf(retro_save_directory, "%s", dir);
-	  printf(retro_save_directory);
+	  printf("retro: %s\n",dir);
+      strcpy(retro_save_directory,&dir);
+	  printf("retro: %s\n", retro_save_directory);
+      // Make sure that we don't have any lingering slashes, etc, as they break Windows.
    }
 
     	if (!environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &fmt))
