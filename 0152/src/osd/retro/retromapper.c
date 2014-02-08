@@ -149,7 +149,7 @@ void retro_init (void){
    {
 	  // If save directory is defined use it, otherwise use system directory
 	  printf("retro: %s\n",dir);
-      strcpy(retro_save_directory,&dir);
+      retro_save_directory=dir;
 	  printf("retro: %s\n", retro_save_directory);
       // Make sure that we don't have any lingering slashes, etc, as they break Windows.
    }
