@@ -162,6 +162,14 @@ static const char* xargv[] = {
 	NULL,
 	NULL,
 	NULL,	
+	NULL,		
+	NULL,	
+	NULL,	
+	NULL,	
+	NULL,	
+	NULL,	
+	NULL,	
+	NULL,	
 };
 
 static int parsePath(char* path, char* gamePath, char* gameName) {
@@ -273,25 +281,64 @@ int executeGame(char* path) {
 	}
 
 	write_log("creating frontend... game=%s\n", MgameName);
-	printf("save dir: %s\n", retro_save_directory);
+	
+	
 
 	//find how many parameters we have
 	for (paramCount = 0; xargv[paramCount] != NULL; paramCount++)
-	printf("args: %s\n", xargv[paramCount]);
+	printf("args: %s\n",xargv[paramCount]);
   
 	xargv[paramCount++] = (char*)g_rom_dir;
-	printf("args: %s\n", xargv[paramCount]);
-
+	printf("args: %s\n",xargv[paramCount]);
 
 	xargv[paramCount++] = (char*)("-cfg_directory");
-	printf("args: %s\n", xargv[paramCount]);
+	printf("args: %s\n",xargv[paramCount]);
 
 	char cfg_dir[256];
 	sprintf(cfg_dir, "%s%c%s%c%s", retro_save_directory, slash, "mame", slash, "cfg");
-	printf("cfgdir: %s\n", cfg_dir);
 	xargv[paramCount++] = (char*)(cfg_dir);
-	printf("args: %s\n", xargv[paramCount]);
+	printf("args: %s\n",xargv[paramCount]);
 
+	xargv[paramCount++] = (char*)("-nvram_directory");
+	printf("args: %s\n",xargv[paramCount]);
+
+	char nv_dir[256];
+	sprintf(nv_dir, "%s%c%s%c%s", retro_save_directory, slash, "mame", slash, "nvram");
+	xargv[paramCount++] = (char*)(nv_dir);
+	printf("args: %s\n",xargv[paramCount]);	
+
+	xargv[paramCount++] = (char*)("-memcard_directory");
+	printf("args: %s\n",xargv[paramCount]);
+
+	char mem_dir[256];
+	sprintf(mem_dir, "%s%c%s%c%s", retro_save_directory, slash, "mame", slash, "memcard");
+	xargv[paramCount++] = (char*)(mem_dir);
+	printf("args: %s\n",xargv[paramCount]);	
+	
+	xargv[paramCount++] = (char*)("-input_directory");
+	printf("args: %s\n",xargv[paramCount]);
+
+	char inp_dir[256];
+	sprintf(inp_dir, "%s%c%s%c%s", retro_save_directory, slash, "mame", slash, "input");
+	xargv[paramCount++] = (char*)(inp_dir);
+	printf("args: %s\n",xargv[paramCount]);
+
+	xargv[paramCount++] = (char*)("-samplepath");
+	printf("args: %s\n",xargv[paramCount]);
+
+	char samples_dir[256];
+	sprintf(samples_dir, "%s%c%s%c%s", retro_system_directory, slash, "mame", slash, "samples");
+	xargv[paramCount++] = (char*)(samples_dir);
+	printf("args: %s\n",xargv[paramCount]);
+
+	xargv[paramCount++] = (char*)("-artpath");
+	printf("args: %s\n",xargv[paramCount]);
+
+	char art_dir[256];
+	sprintf(art_dir, "%s%c%s%c%s", retro_system_directory, slash, "mame", slash, "artwork");
+	xargv[paramCount++] = (char*)(art_dir);
+	printf("args: %s\n",xargv[paramCount]);
+	
 	if (tate) {
 		if (screenRot == 3) {
 			xargv[paramCount++] =(char*) "-rol";
