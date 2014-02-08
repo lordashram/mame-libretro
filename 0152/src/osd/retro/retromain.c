@@ -157,6 +157,11 @@ static const char* xargv[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,	
 };
 
 static int parsePath(char* path, char* gamePath, char* gameName) {
@@ -268,16 +273,22 @@ int executeGame(char* path) {
 	}
 
 	write_log("creating frontend... game=%s\n", MgameName);
+	printf("save dir: %s\n", retro_save_directory);
 
 	//find how many parameters we have
-	for (paramCount = 0; xargv[paramCount] != NULL; paramCount++);
- 
+	for (paramCount = 0; xargv[paramCount] != NULL; paramCount++)
+	printf("args: %s\n", xargv[paramCount]);
+	printf("debug: %s\n");
+    printf("args: %s\n", g_rom_dir);
 	xargv[paramCount++] = (char*)g_rom_dir;
+
+
 	xargv[paramCount++] = "-cfg_directory";
+
 	
 	char *cfg_dir;
 	sprintf(cfg_dir, "%s%c%s", retro_save_directory, slash, "mame\cfg");
-	xargv[paramCount++] = (char*)cfg_dir;
+
 
 	if (tate) {
 		if (screenRot == 3) {

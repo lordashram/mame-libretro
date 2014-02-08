@@ -148,9 +148,7 @@ void retro_init (void){
    if (environ_cb(RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY, &dir) && dir)
    {
 	  // If save directory is defined use it, otherwise use system directory
-	  printf("retro: %s\n",dir);
       retro_save_directory=dir;
-	  printf("retro: %s\n", retro_save_directory);
       // Make sure that we don't have any lingering slashes, etc, as they break Windows.
    }
 
