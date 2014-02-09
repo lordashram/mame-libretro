@@ -149,7 +149,6 @@ void retro_init (void){
 		if (environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &system_dir) && system_dir)
 		{
 			// if defined, use the system directory			
-			printf("TEST SYS %s\n",system_dir);  
 			retro_system_directory=system_dir;		
 		}		   
 		
@@ -158,7 +157,6 @@ void retro_init (void){
 		if (environ_cb(RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY, &save_dir) && save_dir)
 		{
 			// If save directory is defined use it, otherwise use system directory
-			printf("TEST SAVE %s\n",save_dir);
 			retro_save_directory = *save_dir ? save_dir : retro_system_directory;      
 		}
 		else
@@ -168,9 +166,7 @@ void retro_init (void){
 		}
 		
 		printf("Retro SYSTEM_DIRECTORY %s\n",retro_system_directory);
-		printf("TEST");
 		printf("Retro SAVE_DIRECTORY %s\n",retro_save_directory);
-		printf("TEST");
 
 
     	if (!environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &fmt))
