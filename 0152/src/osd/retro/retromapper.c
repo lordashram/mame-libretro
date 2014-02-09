@@ -143,25 +143,34 @@ void retro_init (void){
     	enum retro_pixel_format fmt = RETRO_PIXEL_FORMAT_RGB565;
 #endif
 
-   const char *dir = NULL;
+		const char *system_dir = NULL;
 
    
-		if (environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &dir) && dir)
+		if (environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &system_dir) && system_dir)
 		{
-			// if defined, use the system directory
-			retro_system_directory=dir;
-			printf("Retro SYSTEM_DIRECTORY %s\n",retro_system_directory);
-      
+			// if defined, use the system directory			
+			printf("TEST SYS %s\n",system_dir);  
+			retro_system_directory=system_dir;		
 		}		   
+		
+		const char *save_dir = NULL;
    
-		if (environ_cb(RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY, &dir) && dir)
+		if (environ_cb(RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY, &save_dir) && save_dir)
 		{
 			// If save directory is defined use it, otherwise use system directory
-			retro_save_directory = *dir ? dir : retro_system_directory;
-			printf("Retro SAVE_DIRECTORY %s\n",retro_save_directory);
-      
+			printf("TEST SAVE %s\n",save_dir);
+			retro_save_directory = *save_dir ? save_dir : retro_system_directory;      
+		}
+		else
+		{
+			// make retro_save_directory the same in case RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY is not implemented by the frontend
+			retro_save_directory=retro_system_directory;
 		}
 		
+		printf("Retro SYSTEM_DIRECTORY %s\n",retro_system_directory);
+		printf("TEST");
+		printf("Retro SAVE_DIRECTORY %s\n",retro_save_directory);
+		printf("TEST");
 
 
     	if (!environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &fmt))
