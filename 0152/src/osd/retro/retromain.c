@@ -170,6 +170,10 @@ static const char* xargv[] = {
 	NULL,	
 	NULL,	
 	NULL,	
+	NULL,		
+	NULL,		
+	NULL,		
+	NULL,		
 };
 
 static int parsePath(char* path, char* gamePath, char* gameName) {
@@ -323,6 +327,30 @@ int executeGame(char* path) {
 	xargv[paramCount++] = (char*)(inp_dir);
 	printf("args: %s\n",xargv[paramCount]);
 
+	xargv[paramCount++] = (char*)("-state_directory");
+	printf("args: %s\n",xargv[paramCount]);
+
+	char state_dir[256];
+	sprintf(state_dir, "%s%c%s%c%s", retro_save_directory, slash, "mame", slash, "states");
+	xargv[paramCount++] = (char*)(state_dir);
+	printf("args: %s\n",xargv[paramCount]);	
+	
+	xargv[paramCount++] = (char*)("-snapshot_directory");
+	printf("args: %s\n",xargv[paramCount]);
+
+	char snap_dir[256];
+	sprintf(snap_dir, "%s%c%s%c%s", retro_save_directory, slash, "mame", slash, "snaps");
+	xargv[paramCount++] = (char*)(snap_dir);
+	printf("args: %s\n",xargv[paramCount]);
+	
+	xargv[paramCount++] = (char*)("-diff_directory");
+	printf("args: %s\n",xargv[paramCount]);
+
+	char diff_dir[256];
+	sprintf(diff_dir, "%s%c%s%c%s", retro_save_directory, slash, "mame", slash, "diff");
+	xargv[paramCount++] = (char*)(diff_dir);
+	printf("args: %s\n",xargv[paramCount]);	
+
 	xargv[paramCount++] = (char*)("-samplepath");
 	printf("args: %s\n",xargv[paramCount]);
 
@@ -338,7 +366,7 @@ int executeGame(char* path) {
 	sprintf(art_dir, "%s%c%s%c%s", retro_system_directory, slash, "mame", slash, "artwork");
 	xargv[paramCount++] = (char*)(art_dir);
 	printf("args: %s\n",xargv[paramCount]);
-	
+
 	if (tate) {
 		if (screenRot == 3) {
 			xargv[paramCount++] =(char*) "-rol";
