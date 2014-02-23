@@ -40,6 +40,9 @@ Only the following have been defined so far:
 retro_system_directory\mame\samples
 - artpath
 retro_system_directory\mame\artwork
-
+- cheatpath
+retro_system_directory\mame\cheat
+- hashpath
+retro_system_directory\mame\hash
 
 

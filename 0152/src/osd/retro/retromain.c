@@ -368,7 +368,6 @@ int executeGame(char* path) {
 	xargv[paramCount++] = (char*)(art_dir);
 	printf("args: %s\n",xargv[paramCount]);
 	
-
 	xargv[paramCount++] = (char*)("-cheatpath");
 	printf("args: %s\n",xargv[paramCount]);
 
@@ -377,6 +376,14 @@ int executeGame(char* path) {
 	xargv[paramCount++] = (char*)(cheat_dir);
 	printf("args: %s\n",xargv[paramCount]);
 
+	xargv[paramCount++] = (char*)("-hashpath");
+	printf("args: %s\n",xargv[paramCount]);
+
+	char hash_dir[256];
+	sprintf(hash_dir, "%s%c%s%c%s", retro_system_directory, slash, "mame", slash, "hash");
+	xargv[paramCount++] = (char*)(hash_dir);
+	printf("args: %s\n",xargv[paramCount]);	
+	
 	if (tate) {
 		if (screenRot == 3) {
 			xargv[paramCount++] =(char*) "-rol";
