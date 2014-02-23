@@ -27,11 +27,13 @@
 #include <stddef.h>
 #include <limits.h>
 
-// Hack applied for MSVC when compiling in C89 mode as it isn't C99 compliant.
 #ifdef __cplusplus
 extern "C" {
-#else
-#if defined(_MSC_VER) && !defined(SN_TARGET_PS3) && !defined(__cplusplus)
+#endif
+
+#ifndef __cplusplus
+#if defined(_MSC_VER) && !defined(SN_TARGET_PS3)
+/* Hack applied for MSVC when compiling in C89 mode as it isn't C99 compliant. */
 #define bool unsigned char
 #define true 1
 #define false 0
@@ -413,6 +415,9 @@ enum retro_mod
                                            // If so, no such directory is defined,
                                            // and it's up to the implementation to find a suitable directory.
                                            //
+                                           // NOTE: Some cores used this folder also for "save" data such as memory cards, etc, for lack of a better place to put it.
+                                           // This is now discouraged, and if possible, cores should try to use the new GET_SAVE_DIRECTORY.
+                                           //
 #define RETRO_ENVIRONMENT_SET_PIXEL_FORMAT 10
                                            // const enum retro_pixel_format * --
                                            // Sets the internal pixel format used by the implementation.
@@ -578,7 +583,30 @@ enum retro_mod
 #define RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY 31
                                            // const char ** --
                                            // Returns the "save" directory of the frontend.
-                                           // This directory can be used to store SRAM, memory cards, high scores, etc										   
+                                           // This directory can be used to store SRAM, memory cards, high scores, etc, if the libretro core
+                                           // cannot use the regular memory interface (retro_get_memory_data()).
+                                           //
+                                           // NOTE: libretro cores used to check GET_SYSTEM_DIRECTORY for similar things before.
+                                           // They should still check GET_SYSTEM_DIRECTORY if they want to be backwards compatible.
+                                           // The path here can be NULL. It should only be non-NULL if the frontend user has set a specific save path.
+                                           //
+#define RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO 32
+                                           // const struct retro_system_av_info * --
+                                           // Sets a new av_info structure. This can only be called from within retro_run().
+                                           // This should *only* be used if the core is completely altering the internal resolutions, aspect ratios, timings, sampling rate, etc.
+                                           // Calling this can require a full reinitialization of video/audio drivers in the frontend,
+                                           // so it is important to call it very sparingly, and usually only with the users explicit consent.
+                                           // An eventual driver reinit will happen so that video and audio callbacks
+                                           // happening after this call within the same retro_run() call will target the newly initialized driver.
+                                           //
+                                           // This callback makes it possible to support configurable resolutions in games, which can be useful to
+                                           // avoid setting the "worst case" in max_width/max_height.
+                                           //
+                                           // ***HIGHLY RECOMMENDED*** Do not call this callback every time resolution changes in an emulator core if it's
+                                           // expected to be a temporary change, for the reasons of possible driver reinit.
+                                           // This call is not a free pass for not trying to provide correct values in retro_get_system_av_info().
+                                           //
+                                           // If this returns false, the frontend does not acknowledge a changed av_info struct.
 
 enum retro_log_level
 {
@@ -610,6 +638,11 @@ struct retro_log_callback
 #define RETRO_SIMD_SSE3     (1 << 6)
 #define RETRO_SIMD_SSSE3    (1 << 7)
 #define RETRO_SIMD_MMX      (1 << 8)
+#define RETRO_SIMD_MMXEXT   (1 << 9)
+#define RETRO_SIMD_SSE4     (1 << 10)
+#define RETRO_SIMD_SSE42    (1 << 11)
+#define RETRO_SIMD_AVX2     (1 << 12)
+#define RETRO_SIMD_VFPU     (1 << 13)
 
 typedef uint64_t retro_perf_tick_t;
 typedef int64_t retro_time_t;

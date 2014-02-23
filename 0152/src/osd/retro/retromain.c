@@ -150,6 +150,7 @@ static const char* xargv[] = {
 	"1.0",
 	"-gamma",
 	"1.0",
+	"-cheat",
 	"-rompath",
 	NULL,
 	NULL,
@@ -365,6 +366,15 @@ int executeGame(char* path) {
 	char art_dir[256];
 	sprintf(art_dir, "%s%c%s%c%s", retro_system_directory, slash, "mame", slash, "artwork");
 	xargv[paramCount++] = (char*)(art_dir);
+	printf("args: %s\n",xargv[paramCount]);
+	
+
+	xargv[paramCount++] = (char*)("-cheatpath");
+	printf("args: %s\n",xargv[paramCount]);
+
+	char cheat_dir[256];
+	sprintf(cheat_dir, "%s%c%s%c%s", retro_system_directory, slash, "mame", slash, "cheat");
+	xargv[paramCount++] = (char*)(cheat_dir);
 	printf("args: %s\n",xargv[paramCount]);
 
 	if (tate) {
