@@ -45,4 +45,4 @@ retro_system_directory\mame\cheat
 - hashpath
 retro_system_directory\mame\hash
 
-
+Cheats need to be extracted, loading from a 7z won't work here

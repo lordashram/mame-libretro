@@ -7,6 +7,7 @@ char RPATH[512];
 
 char *retro_save_directory;
 char *retro_system_directory;
+char *retro_content_directory;
 
 extern "C" int mmain(int argc, const char *argv);
 extern bool draw_this_frame;
@@ -144,13 +145,20 @@ void retro_init (void){
 #endif
 
 		const char *system_dir = NULL;
-
    
 		if (environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &system_dir) && system_dir)
 		{
 			// if defined, use the system directory			
 			retro_system_directory=system_dir;		
 		}		   
+		
+		const char *content_dir = NULL;
+   
+		if (environ_cb(RETRO_ENVIRONMENT_GET_CONTENT_DIRECTORY, &content_dir) && content_dir)
+		{
+			// if defined, use the system directory			
+			retro_content_directory=content_dir;		
+		}			
 		
 		const char *save_dir = NULL;
    
@@ -167,6 +175,7 @@ void retro_init (void){
 		
 		printf("Retro SYSTEM_DIRECTORY %s\n",retro_system_directory);
 		printf("Retro SAVE_DIRECTORY %s\n",retro_save_directory);
+		printf("Retro CONTENT_DIRECTORY %s\n",retro_content_directory);
 
 
     	if (!environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &fmt))

@@ -175,6 +175,12 @@ static const char* xargv[] = {
 	NULL,		
 	NULL,		
 	NULL,		
+	NULL,	
+	NULL,	
+	NULL,	
+	NULL,	
+	NULL,	
+	NULL,	
 };
 
 static int parsePath(char* path, char* gamePath, char* gameName) {
@@ -291,98 +297,68 @@ int executeGame(char* path) {
 
 	//find how many parameters we have
 	for (paramCount = 0; xargv[paramCount] != NULL; paramCount++)
-	printf("args: %s\n",xargv[paramCount]);
+		printf("args: %s\n",xargv[paramCount]);
   
-	xargv[paramCount++] = (char*)g_rom_dir;
-	printf("args: %s\n",xargv[paramCount]);
-
+	xargv[paramCount++] = (char*)g_rom_dir;	
 	xargv[paramCount++] = (char*)("-cfg_directory");
-	printf("args: %s\n",xargv[paramCount]);
-
+	
 	char cfg_dir[256];
 	sprintf(cfg_dir, "%s%c%s%c%s", retro_save_directory, slash, "mame", slash, "cfg");
 	xargv[paramCount++] = (char*)(cfg_dir);
-	printf("args: %s\n",xargv[paramCount]);
-
+	
 	xargv[paramCount++] = (char*)("-nvram_directory");
-	printf("args: %s\n",xargv[paramCount]);
-
+	
 	char nv_dir[256];
 	sprintf(nv_dir, "%s%c%s%c%s", retro_save_directory, slash, "mame", slash, "nvram");
 	xargv[paramCount++] = (char*)(nv_dir);
-	printf("args: %s\n",xargv[paramCount]);	
-
+	
 	xargv[paramCount++] = (char*)("-memcard_directory");
-	printf("args: %s\n",xargv[paramCount]);
-
+	
 	char mem_dir[256];
 	sprintf(mem_dir, "%s%c%s%c%s", retro_save_directory, slash, "mame", slash, "memcard");
 	xargv[paramCount++] = (char*)(mem_dir);
-	printf("args: %s\n",xargv[paramCount]);	
-	
+		
 	xargv[paramCount++] = (char*)("-input_directory");
-	printf("args: %s\n",xargv[paramCount]);
-
+	
 	char inp_dir[256];
 	sprintf(inp_dir, "%s%c%s%c%s", retro_save_directory, slash, "mame", slash, "input");
 	xargv[paramCount++] = (char*)(inp_dir);
-	printf("args: %s\n",xargv[paramCount]);
-
+	
 	xargv[paramCount++] = (char*)("-state_directory");
-	printf("args: %s\n",xargv[paramCount]);
-
+	
 	char state_dir[256];
 	sprintf(state_dir, "%s%c%s%c%s", retro_save_directory, slash, "mame", slash, "states");
 	xargv[paramCount++] = (char*)(state_dir);
-	printf("args: %s\n",xargv[paramCount]);	
-	
+		
 	xargv[paramCount++] = (char*)("-snapshot_directory");
-	printf("args: %s\n",xargv[paramCount]);
-
+	
 	char snap_dir[256];
 	sprintf(snap_dir, "%s%c%s%c%s", retro_save_directory, slash, "mame", slash, "snaps");
 	xargv[paramCount++] = (char*)(snap_dir);
-	printf("args: %s\n",xargv[paramCount]);
-	
+		
 	xargv[paramCount++] = (char*)("-diff_directory");
-	printf("args: %s\n",xargv[paramCount]);
 
 	char diff_dir[256];
 	sprintf(diff_dir, "%s%c%s%c%s", retro_save_directory, slash, "mame", slash, "diff");
 	xargv[paramCount++] = (char*)(diff_dir);
-	printf("args: %s\n",xargv[paramCount]);	
-
+	
 	xargv[paramCount++] = (char*)("-samplepath");
-	printf("args: %s\n",xargv[paramCount]);
-
+	
 	char samples_dir[256];
 	sprintf(samples_dir, "%s%c%s%c%s", retro_system_directory, slash, "mame", slash, "samples");
 	xargv[paramCount++] = (char*)(samples_dir);
-	printf("args: %s\n",xargv[paramCount]);
-
+	
 	xargv[paramCount++] = (char*)("-artpath");
-	printf("args: %s\n",xargv[paramCount]);
-
+	
 	char art_dir[256];
 	sprintf(art_dir, "%s%c%s%c%s", retro_system_directory, slash, "mame", slash, "artwork");
 	xargv[paramCount++] = (char*)(art_dir);
-	printf("args: %s\n",xargv[paramCount]);
-	
+		
 	xargv[paramCount++] = (char*)("-cheatpath");
-	printf("args: %s\n",xargv[paramCount]);
-
+	
 	char cheat_dir[256];
-	sprintf(cheat_dir, "%s%c%s%c%s", retro_system_directory, slash, "mame", slash, "cheat");
+	sprintf(cheat_dir, "%s%c%s%c%s", retro_save_directory, slash, "mame", slash, "cheat");
 	xargv[paramCount++] = (char*)(cheat_dir);
-	printf("args: %s\n",xargv[paramCount]);
-
-	xargv[paramCount++] = (char*)("-hashpath");
-	printf("args: %s\n",xargv[paramCount]);
-
-	char hash_dir[256];
-	sprintf(hash_dir, "%s%c%s%c%s", retro_system_directory, slash, "mame", slash, "hash");
-	xargv[paramCount++] = (char*)(hash_dir);
-	printf("args: %s\n",xargv[paramCount]);	
 	
 	if (tate) {
 		if (screenRot == 3) {
@@ -400,11 +376,10 @@ int executeGame(char* path) {
 
 	xargv[paramCount++] = MgameName;
 
-	write_log("executing frontend... params:%i\n", paramCount);
+	write_log("executing frontend... params:%i\n parameters:", paramCount);
 
 	for (int i = 0; xargv[i] != NULL; i++){
-		write_log("%s ",xargv[i]);
-		write_log("\n");
+		write_log("%s \n",xargv[i]);
 	}
 
 	osd_init_midi();
