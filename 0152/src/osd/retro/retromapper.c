@@ -41,6 +41,7 @@ void retro_set_environment(retro_environment_t cb)
       { "mame_current_mouse_enable", "Mouse supported; disabled|enabled" },
       { "mame_current_videoapproach1_enable", "Video approach 1 Enabled; disabled|enabled" },
       { "mame_current_nagscreenpatch_enable", "Nagscreen patch Enabled; disabled|enabled" },
+	  //{ "mame_extra_content", "Look for additional content in ; system|content" },	  
       { NULL, NULL },
    };
 

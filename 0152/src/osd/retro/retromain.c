@@ -357,7 +357,7 @@ int executeGame(char* path) {
 	xargv[paramCount++] = (char*)("-cheatpath");
 	
 	char cheat_dir[256];
-	sprintf(cheat_dir, "%s%c%s%c%s", retro_save_directory, slash, "mame", slash, "cheat");
+	sprintf(cheat_dir, "%s%c%s%c%s", retro_system_directory, slash, "mame", slash, "cheat");
 	xargv[paramCount++] = (char*)(cheat_dir);
 	
 	if (tate) {
