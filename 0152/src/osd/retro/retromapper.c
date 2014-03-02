@@ -2,7 +2,7 @@ void retro_poll_mame_input();
 
 static int rtwi=320,rthe=240,topw=1024; // DEFAULT TEXW/TEXH/PITCH
 static float rtaspect=0;
-int SHIFTON=-1;
+int SHIFTON=-1,NEWGAME_FROM_OSD=0;
 char RPATH[512];
 
 char *retro_save_directory;
@@ -206,11 +206,25 @@ void retro_deinit(void)
 
 void retro_reset (void) {}
 
+
+
 void retro_run (void)
 {
    bool updated = false;
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated) && updated)
       check_variables();
+
+   if(NEWGAME_FROM_OSD==1)
+   {
+	struct retro_system_av_info ninfo;
+	retro_get_system_av_info(&ninfo);
+
+	environ_cb(RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO, &ninfo);
+
+	printf("ChangeAV: w:%d h:%d ra:%f %f \n",ninfo.geometry.base_width,ninfo.geometry.base_height,ninfo.geometry.aspect_ratio);
+	NEWGAME_FROM_OSD=0;
+
+   }
 
 	retro_poll_mame_input();
 
