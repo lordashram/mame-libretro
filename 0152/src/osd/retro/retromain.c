@@ -96,14 +96,14 @@ static render_target *our_target = NULL;
 // input device
 static input_device *retrokbd_device; // KEYBD
 static input_device *mouse_device;    // MOUSE
-static input_device *joy_device[2];// JOY0/JOY1
-static input_device *Pad_device[2];// PAD0/PAD1
+static input_device *joy_device[4];// JOY0/JOY1/JOY2/JOY3
+static input_device *Pad_device[4];// PAD0/PAD1/PAD2/PAD3
 
 // state 
 static UINT16 retrokbd_state[RETROK_LAST];
 static int mouseLX,mouseLY;
 static int mouseBUT[4];
-static Joystate joystate[2];
+static Joystate joystate[4];
 
 //enables / disables tate mode
 static int tate = 0;

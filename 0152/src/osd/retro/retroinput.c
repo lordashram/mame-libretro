@@ -142,10 +142,13 @@ enum
         RETROPAD_TOTAL
 }; 
 
-input_item_id PAD_DIR[2][4]={
+input_item_id PAD_DIR[4][4]={
 	{ITEM_ID_UP,ITEM_ID_DOWN,ITEM_ID_LEFT,ITEM_ID_RIGHT },
-	{ITEM_ID_R ,ITEM_ID_F   ,ITEM_ID_D   ,ITEM_ID_G     }
+	{ITEM_ID_R ,ITEM_ID_F   ,ITEM_ID_D   ,ITEM_ID_G     },
+	{ITEM_ID_I,ITEM_ID_K,ITEM_ID_J,ITEM_ID_L },
+	{ITEM_ID_8_PAD ,ITEM_ID_2_PAD   ,ITEM_ID_4_PAD   ,ITEM_ID_6_PAD     }
 };
+
 
 //    Default : A ->B1 | B ->B2 | X ->B3 | Y ->B4 | L ->B5 | R ->B6
 int   Buttons_mapping[6]={RETROPAD_A,RETROPAD_B,RETROPAD_X,RETROPAD_Y,RETROPAD_L,RETROPAD_R};
@@ -238,7 +241,7 @@ static void initInput(running_machine &machine)
 
 	Input_Binding(machine);
 
-	for(i=0;i<2;i++){
+	for(i=0;i<4;i++){
 
 		sprintf(defname, "Joy%d", i);
 		joy_device[i]=machine.input().device_class(DEVICE_CLASS_JOYSTICK).add_device(defname);
@@ -347,7 +350,7 @@ void retro_poll_mame_input()
 	}while(ktable[i].retro_key_name!=-1);
 
 	//JOY/PAD
-	for(j=0;j<2;j++){
+	for(j=0;j<4;j++){
 
 		for(i=0;i<MAX_BUTTONS;i++)
 			joystate[j].button[i] = input_state_cb(j, RETRO_DEVICE_JOYPAD, 0,i)?0x80:0;
