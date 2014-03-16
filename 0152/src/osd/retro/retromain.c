@@ -365,7 +365,7 @@ int executeGame(char* path) {
 	xargv[paramCount++] = (char*)("-inipath");
 	
 	char ini_dir[256];
-	sprintf(ini_dir, "%s%c%s%c%s%c", retro_system_directory, slash, "mame", slash, "ini", slash);
+	sprintf(ini_dir, "%s%c%s%c%s", retro_system_directory, slash, "mame", slash, "ini");
 	xargv[paramCount++] = (char*)(ini_dir);	
 	
 	if (tate) {
