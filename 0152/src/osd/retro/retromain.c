@@ -151,7 +151,6 @@ static const char* xargv[] = {
 	"-gamma",
 	"1.0",
 	"-cheat",
-	"-createconfig",
 	"-rompath",
 	NULL,
 	NULL,
