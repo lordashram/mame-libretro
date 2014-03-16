@@ -329,7 +329,7 @@ ifndef SUBTARGET
 SUBTARGET = $(TARGET)
 endif
 
-#TARGET=mame
+TARGET=mame
 #SUBTARGET=mame
 OSD=retro
 

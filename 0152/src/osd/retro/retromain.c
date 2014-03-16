@@ -151,6 +151,7 @@ static const char* xargv[] = {
 	"-gamma",
 	"1.0",
 	"-cheat",
+	"-createconfig",
 	"-rompath",
 	NULL,
 	NULL,
@@ -181,6 +182,7 @@ static const char* xargv[] = {
 	NULL,	
 	NULL,	
 	NULL,	
+	NULL,
 };
 
 static int parsePath(char* path, char* gamePath, char* gameName) {
@@ -363,7 +365,7 @@ int executeGame(char* path) {
 	xargv[paramCount++] = (char*)("-inipath");
 	
 	char ini_dir[256];
-	sprintf(ini_dir, "%s%c%s%c%s", retro_system_directory, slash, "mame", slash, "ini");
+	sprintf(ini_dir, "%s%c%s%c%s%c", retro_system_directory, slash, "mame", slash, "ini", slash);
 	xargv[paramCount++] = (char*)(ini_dir);	
 	
 	if (tate) {
