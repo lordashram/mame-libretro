@@ -374,7 +374,12 @@ int executeGame(char* path) {
 		}
 	}
 
-	xargv[paramCount++] = MgameName;
+	if(strcmp(MgameName,"createconfig")==0){
+
+		xargv[paramCount++] = (char*) "-cc";
+	}
+	else
+		xargv[paramCount++] = MgameName;
 
 	write_log("executing frontend... params:%i\n parameters:", paramCount);
 
