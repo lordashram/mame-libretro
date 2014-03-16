@@ -360,6 +360,12 @@ int executeGame(char* path) {
 	sprintf(cheat_dir, "%s%c%s%c%s", retro_system_directory, slash, "mame", slash, "cheat");
 	xargv[paramCount++] = (char*)(cheat_dir);
 	
+	xargv[paramCount++] = (char*)("-inipath");
+	
+	char ini_dir[256];
+	sprintf(ini_dir, "%s%c%s%c%s", retro_system_directory, slash, "mame", slash, "ini");
+	xargv[paramCount++] = (char*)(ini_dir);	
+	
 	if (tate) {
 		if (screenRot == 3) {
 			xargv[paramCount++] =(char*) "-rol";
