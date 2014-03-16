@@ -98,7 +98,11 @@ unsigned retro_api_version(void)
 void retro_get_system_info(struct retro_system_info *info)
 {   	
    memset(info, 0, sizeof(*info));
+#if defined(WANT_MAME)
    info->library_name = "MAME 2014";
+#elif defined(WANT_MESS)
+   info->library_name = "MESS 2014";
+#endif   
    info->library_version = "0.152";
    info->valid_extensions = "zip|chd|7z";
    info->need_fullpath = true;   
