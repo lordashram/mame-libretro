@@ -98,11 +98,16 @@ unsigned retro_api_version(void)
 void retro_get_system_info(struct retro_system_info *info)
 {   	
    memset(info, 0, sizeof(*info));
-#if defined(WANT_MAME)
+#ifdef WANT_MAME
    info->library_name = "MAME 2014";
-#elif defined(WANT_MESS)
+#elif WANT_MESS
    info->library_name = "MESS 2014";
+#elif WANT_UME
+   info->library_name = "UME 2014";   
+#else
+   info->library_name = "N/D";
 #endif   
+   
    info->library_version = "0.152";
    info->valid_extensions = "zip|chd|7z";
    info->need_fullpath = true;   
@@ -256,6 +261,7 @@ bool retro_load_game(const struct retro_game_info *info)
 	memset(videoBuffer,0,1024*1024*2*2);
 #endif
 	char basename[128];
+	
 	extract_basename(basename, info->path, sizeof(basename));
   	extract_directory(g_rom_dir, info->path, sizeof(g_rom_dir));
 	strcpy(RPATH,info->path);

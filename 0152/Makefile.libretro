@@ -49,6 +49,13 @@ TARGET_NAME := $(TARGET)
 EXE = 
 LIBS = 
 
+ifeq ($(TARGET), mess)
+CORE_DEFINE := -DWANT_MESS
+else
+CORE_DEFINE := -DWANT_MAME
+endif
+$(info COREDEF = $(CORE_DEFINE))
+
 #-------------------------------------------------
 # compile flags
 # CCOMFLAGS are common flags
@@ -61,12 +68,17 @@ LIBS =
 PTR64=1
 CCOMFLAGS = -DDISABLE_MIDI
 CONLYFLAGS = -fpermissive
+CONLYFLAGS += $(CORE_DEFINE)
 COBJFLAGS =
 CPPONLYFLAGS = -fpermissive
+CPPONLYFLAGS += $(CORE_DEFINE)
 # LDFLAGS are used generally; LDFLAGSEMULATOR are additional
 # flags only used when linking the core emulator
 LDFLAGS =
 LDFLAGSEMULATOR =
+
+$(info CFLAGS = $(CONLYFLAGS))
+$(info CPPFLAGS = $(CPPONLYFLAGS))
 
 # uncomment next line to build expat as part of MAME build
 BUILD_EXPAT = 1
@@ -305,7 +317,7 @@ else
 	NATIVELD = $(LD)
 	CC_AS = gcc
 	SHARED := -shared -static-libgcc -static-libstdc++ -s -Wl,--version-script=src/osd/retro/link.T
-   	#CFLAGS += -D__WIN32__ -D__WIN32_LIBRETRO__
+   	#CFLAGS += -D__WIN32__ -D__WIN32_LIBRETRO__	
    	CCOMFLAGS += -DRETRO -D__WIN32__ -D__WIN32_LIBRETRO__
 	LDFLAGS +=   $(SHARED)
 	EXE = .exe
@@ -333,8 +345,8 @@ endif
 #SUBTARGET=mame
 OSD=retro
 
-
 NOWERROR = 1
+
 
 #-------------------------------------------------
 # specify core target: mame, mess, etc.

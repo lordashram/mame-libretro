@@ -1,5 +1,6 @@
 #include <unistd.h>
 #include <stdint.h>
+#include <string.h>
 
 #include "osdepend.h"
 
@@ -16,6 +17,7 @@
 static int ui_ipt_pushchar=-1;
 
 char g_rom_dir[1024];
+char g_sys_name[1024];
 
 
 #ifdef _WIN32
@@ -23,10 +25,6 @@ char slash = '\\';
 #else
 char slash = '/';
 #endif
-
-
-
-
 
 #define M16B
 
@@ -55,6 +53,20 @@ static void extract_basename(char *buf, const char *path, size_t size)
       *ext = '\0';
 }
 
+static void extract_systemname(const char *path)
+{
+   
+   char *delim = &slash; 
+
+   char *copy      = NULL;
+   const char *tmp = NULL;
+   
+   char *save;
+   //tmp = strtok_r(copy, delim, &save);
+   printf("SUBPATH %s\n", &path);
+
+}
+
 static void extract_directory(char *buf, const char *path, size_t size)
 {
    strncpy(buf, path, size - 1);
@@ -69,6 +81,7 @@ static void extract_directory(char *buf, const char *path, size_t size)
    else
       buf[0] = '\0';
 }
+
 //============================================================
 //  CONSTANTS
 //============================================================
@@ -112,6 +125,7 @@ int vertical,orient;
 
 static char MgamePath[1024];
 static char MgameName[512];
+static char MsystemName[512];
 
 static int FirstTimeUpdate = 1;
 
@@ -189,12 +203,14 @@ static int parsePath(char* path, char* gamePath, char* gameName) {
 	int slashIndex = -1;
 	int dotIndex = -1;
 	int len = strlen(path);
+	
+		
 	if (len < 1) {
 		return 0;
 	}
 
 	for (i = len - 1; i >=0; i--) {
-		if (path[i] == '/') {
+		if (path[i] == slash) {
 			slashIndex = i;
 			break;
 		} else
@@ -214,6 +230,38 @@ static int parsePath(char* path, char* gamePath, char* gameName) {
 	write_log("gamePath=%s gameName=%s\n", gamePath, gameName);
 	return 1;
 }
+
+static int parseSystemName(char* path, char* systemName) {
+	int i;
+	int j=0;
+	int slashIndex[2];
+	int len = strlen(path);
+	
+	if (len < 1) {
+		return 0;
+	}
+
+	for (i = len - 1; i >=0; i--) {
+		if (j<2)
+		{
+		   if (path[i] == slash) {
+			   slashIndex[j] = i;
+			   j++;
+		   } 
+		}
+		else
+		   break;
+	}
+	if (slashIndex < 0 ) {
+		return 0;
+	}
+	
+	strncpy(systemName, path + (slashIndex[1] +1), slashIndex[0]-slashIndex[1]-1);
+	
+	write_log("systemName=%s\n", systemName);
+	return 1;
+}
+
 
 static int getGameInfo(char* gameName, int* rotation, int* driverIndex) {
 	int gameFound = 0;
@@ -245,7 +293,7 @@ static int getGameInfo(char* gameName, int* rotation, int* driverIndex) {
 int executeGame(char* path) {
 	// cli_frontend does the heavy lifting; if we have osd-specific options, we
 	// create a derivative of cli_options and add our own
-
+	
 	int paramCount;
 	int result = 0;
 	int gameRot=0;
@@ -255,7 +303,7 @@ int executeGame(char* path) {
 	FirstTimeUpdate = 1;
 
 	screenRot = 0;
-
+	
 	//split the path to directory and the name without the zip extension
 	result = parsePath(path, MgamePath, MgameName);
 	if (result == 0) {
@@ -264,7 +312,15 @@ int executeGame(char* path) {
 	//	return -1;
 	}
 
-	//Find the game info. Exit if game driver was not found.
+	//split the path to directory and the name without the zip extension
+	result = parseSystemName(path, MsystemName);
+	if (result == 0) {
+		write_log("parse path failed! path=%s\n", path);
+		strcpy(MgameName,path );
+	//	return -1;
+	}
+	
+	//find the game info. Exit if game driver was not found.
 	if (getGameInfo(MgameName, &gameRot, &driverIndex) == 0) {
 		write_log("game not found: %s\n", MgameName);
 		return -2;
@@ -300,7 +356,7 @@ int executeGame(char* path) {
 	for (paramCount = 0; xargv[paramCount] != NULL; paramCount++)
 		printf("args: %s\n",xargv[paramCount]);
   
-	xargv[paramCount++] = (char*)g_rom_dir;	
+	xargv[paramCount++] = (char*)g_rom_dir;
 	xargv[paramCount++] = (char*)("-cfg_directory");
 	
 	char cfg_dir[256];
@@ -381,7 +437,24 @@ int executeGame(char* path) {
 		}
 	}
 
-	xargv[paramCount++] = MgameName;
+	
+#ifdef WANT_MAME
+   xargv[paramCount++] = MgameName;
+#elif WANT_MESS
+   xargv[paramCount++] = MsystemName;
+   xargv[paramCount++] = (char*)("-cart");
+   xargv[paramCount++] = MgameName;
+#elif WANT_UME
+   xargv[paramCount++] = MsystemName;
+   xargv[paramCount++] = MgameName;          
+#endif 	
+	
+#if defined(WANT_MAME)
+   
+#elif defined(WANT_MESS)
+
+#endif   
+	
 
 	write_log("executing frontend... params:%i\n parameters:", paramCount);
 
