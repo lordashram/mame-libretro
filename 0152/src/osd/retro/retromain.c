@@ -17,7 +17,6 @@
 static int ui_ipt_pushchar=-1;
 
 char g_rom_dir[1024];
-char g_sys_name[1024];
 
 
 #ifdef _WIN32
@@ -25,6 +24,14 @@ char slash = '\\';
 #else
 char slash = '/';
 #endif
+
+#ifdef WANT_MAME
+const char core[] = "mame";
+#elif WANT_MESS
+const char core[] = "mess";
+#elif WANT_UME
+const char core[] = "ume";
+#endif 	
 
 #define M16B
 
@@ -51,20 +58,6 @@ static void extract_basename(char *buf, const char *path, size_t size)
    char *ext = strrchr(buf, '.');
    if (ext)
       *ext = '\0';
-}
-
-static void extract_systemname(const char *path)
-{
-   
-   char *delim = &slash; 
-
-   char *copy      = NULL;
-   const char *tmp = NULL;
-   
-   char *save;
-   //tmp = strtok_r(copy, delim, &save);
-   printf("SUBPATH %s\n", &path);
-
 }
 
 static void extract_directory(char *buf, const char *path, size_t size)
@@ -158,12 +151,6 @@ static const char* xargv[] = {
 	"-samplerate",
 	"48000",
 	"-sound",
-	"-contrast",
-	"1.0",
-	"-brightness",
-	"1.0",
-	"-gamma",
-	"1.0",
 	"-cheat",
 	"-rompath",
 	NULL,
@@ -356,71 +343,73 @@ int executeGame(char* path) {
 	for (paramCount = 0; xargv[paramCount] != NULL; paramCount++)
 		printf("args: %s\n",xargv[paramCount]);
   
+	
+
 	xargv[paramCount++] = (char*)g_rom_dir;
 	xargv[paramCount++] = (char*)("-cfg_directory");
 	
 	char cfg_dir[256];
-	sprintf(cfg_dir, "%s%c%s%c%s", retro_save_directory, slash, "mame", slash, "cfg");
+	sprintf(cfg_dir, "%s%c%s%c%s", retro_save_directory, slash, core, slash, "cfg");
 	xargv[paramCount++] = (char*)(cfg_dir);
 	
 	xargv[paramCount++] = (char*)("-nvram_directory");
 	
 	char nv_dir[256];
-	sprintf(nv_dir, "%s%c%s%c%s", retro_save_directory, slash, "mame", slash, "nvram");
+	sprintf(nv_dir, "%s%c%s%c%s", retro_save_directory, slash, core, slash, "nvram");
 	xargv[paramCount++] = (char*)(nv_dir);
 	
 	xargv[paramCount++] = (char*)("-memcard_directory");
 	
 	char mem_dir[256];
-	sprintf(mem_dir, "%s%c%s%c%s", retro_save_directory, slash, "mame", slash, "memcard");
+	sprintf(mem_dir, "%s%c%s%c%s", retro_save_directory, slash, core, slash, "memcard");
 	xargv[paramCount++] = (char*)(mem_dir);
 		
 	xargv[paramCount++] = (char*)("-input_directory");
 	
 	char inp_dir[256];
-	sprintf(inp_dir, "%s%c%s%c%s", retro_save_directory, slash, "mame", slash, "input");
+	sprintf(inp_dir, "%s%c%s%c%s", retro_save_directory, slash, core, slash, "input");
 	xargv[paramCount++] = (char*)(inp_dir);
 	
 	xargv[paramCount++] = (char*)("-state_directory");
 	
 	char state_dir[256];
-	sprintf(state_dir, "%s%c%s%c%s", retro_save_directory, slash, "mame", slash, "states");
+	sprintf(state_dir, "%s%c%s%c%s", retro_save_directory, slash, core, slash, "states");
 	xargv[paramCount++] = (char*)(state_dir);
 		
 	xargv[paramCount++] = (char*)("-snapshot_directory");
 	
 	char snap_dir[256];
-	sprintf(snap_dir, "%s%c%s%c%s", retro_save_directory, slash, "mame", slash, "snaps");
+	sprintf(snap_dir, "%s%c%s%c%s", retro_save_directory, slash, core, slash, "snaps");
 	xargv[paramCount++] = (char*)(snap_dir);
 		
 	xargv[paramCount++] = (char*)("-diff_directory");
 
 	char diff_dir[256];
-	sprintf(diff_dir, "%s%c%s%c%s", retro_save_directory, slash, "mame", slash, "diff");
+	sprintf(diff_dir, "%s%c%s%c%s", retro_save_directory, slash, core, slash, "diff");
 	xargv[paramCount++] = (char*)(diff_dir);
 	
 	xargv[paramCount++] = (char*)("-samplepath");
 	
 	char samples_dir[256];
-	sprintf(samples_dir, "%s%c%s%c%s", retro_system_directory, slash, "mame", slash, "samples");
+	sprintf(samples_dir, "%s%c%s%c%s", retro_system_directory, slash, core, slash, "samples");
 	xargv[paramCount++] = (char*)(samples_dir);
 	
 	xargv[paramCount++] = (char*)("-artpath");
 	
 	char art_dir[256];
-	sprintf(art_dir, "%s%c%s%c%s", retro_system_directory, slash, "mame", slash, "artwork");
+	sprintf(art_dir, "%s%c%s%c%s", retro_system_directory, slash, core, slash, "artwork");
 	xargv[paramCount++] = (char*)(art_dir);
 		
 	xargv[paramCount++] = (char*)("-cheatpath");
 	
 	char cheat_dir[256];
-	sprintf(cheat_dir, "%s%c%s%c%s", retro_system_directory, slash, "mame", slash, "cheat");
+	sprintf(cheat_dir, "%s%c%s%c%s", retro_system_directory, slash, core, slash, "cheat");
 	xargv[paramCount++] = (char*)(cheat_dir);
 	
 	xargv[paramCount++] = (char*)("-inipath");
 	
 	char ini_dir[256];
-	sprintf(ini_dir, "%s%c%s%c%s", retro_system_directory, slash, "mame", slash, "ini");
+	sprintf(ini_dir, "%s%c%s%c%s", retro_system_directory, slash, core, slash, "ini");
 	xargv[paramCount++] = (char*)(ini_dir);	
 	
 	if (tate) {
@@ -436,30 +425,22 @@ int executeGame(char* path) {
 			xargv[paramCount++] = (char*)(screenRot ? "-ror" : "-mouse");
 		}
 	}
-
 	
-#ifdef WANT_MAME
+#ifdef WANT_MAME	
    xargv[paramCount++] = MgameName;
 #elif WANT_MESS
    xargv[paramCount++] = MsystemName;
-   xargv[paramCount++] = (char*)("-cart");
+   xargv[paramCount++] = (char*)"-cart";
    xargv[paramCount++] = MgameName;
 #elif WANT_UME
    xargv[paramCount++] = MsystemName;
    xargv[paramCount++] = MgameName;          
 #endif 	
 	
-#if defined(WANT_MAME)
-   
-#elif defined(WANT_MESS)
+	write_log("executing frontend... params:%i\n parameters:\n", paramCount);
 
-#endif   
-	
-
-	write_log("executing frontend... params:%i\n parameters:", paramCount);
-
-	for (int i = 0; xargv[i] != NULL; i++){
-		write_log("%s \n",xargv[i]);
+	for (int i = 1; xargv[i] != NULL; i++){
+		write_log("%s ",xargv[i]);
 	}
 
 	osd_init_midi();
