@@ -58,7 +58,6 @@ LIBS =
 #-------------------------------------------------
 
 # start with empties for everything
-PTR64=1
 CCOMFLAGS = -DDISABLE_MIDI
 CONLYFLAGS = -fpermissive
 COBJFLAGS =
