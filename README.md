@@ -1,7 +1,7 @@
 mame-libretro
 =============
 
-Mainline MAME (0.152) for libretro (with libco) . WIP. Expect bugs
+Mainline MAME/MESS/UME (0.152) for libretro (with libco) . WIP. Expect bugs
 
 Source base is mame0.152 official source: 
 http://www.mamedev.org/downloader.php?file=releases/mame0152s.zip
@@ -42,10 +42,29 @@ CONTROLS:
 
 TODO:
 
-* sample rate or refresh rate on the fly
-* Map artwork, samples, and any other content to content directory if RETRO_ENVIRONMENT_GET_CONTENT_DIRECTORY is defined
+GLOBAL:
 
-Notes:
+* sample rate or refresh rate on the fly
+* rework global inputs
+
+MAME
+
+* core option to disable per driver mappings and default to a single retropad assignment
+* core option to select additional content location (artwork/samples/etc) between contentdir and systemdir
+
+MESS
+
+* ONLY CART GAMES WORKING AS OF NOW
+* autodetection of media type for common systems
+* global retropad assignment
+* per driver retropad mappings for common systems
+* support for soflist games
+
+UME
+
+* completely untested
+
+NOTES:
 
 * Path management has been reworked:
 
@@ -56,30 +75,32 @@ retro_system_directory.
 Paths are mapped like this:
 
 - cfg_directory
-retro_save_directory\mame\cfg
+retro_save_directory\[mame|mess|ume]\cfg
 - nvram_directory
-retro_save_directory\mame\nvram
+retro_save_directory\[mame|mess|ume]\nvram
 - memcard_directory
-retro_save_directory\mame\memcard
+retro_save_directory\[mame|mess|ume]\memcard
 - input_directory
-retro_save_directory\mame\input
+retro_save_directory\[mame|mess|ume]\input
 - state_directory (MAME save states, not libretro save states, core doesn't implement those)
-retro_save_directory\mame\states
+retro_save_directory\[mame|mess|ume]\states
 - snapshot_directory
-retro_save_directory\mame\snaps
+retro_save_directory\[mame|mess|ume]\snaps
 - diff_directory
-retro_save_directory\mame\diff
+retro_save_directory\[mame|mess|ume]\diff
 
 Also there are some optional paths that might hold additional data for mame like artwork, samples, etc.
 Only the following have been defined so far:
 
 - samplepath
-retro_system_directory\mame\samples
+retro_system_directory\[mame|mess|ume]\samples
 - artpath
-retro_system_directory\mame\artwork
+retro_system_directory\[mame|mess|ume]\artwork
 - cheatpath
-retro_system_directory\mame\cheat
+retro_system_directory\[mame|mess|ume]\cheat
 - hashpath
-retro_system_directory\mame\hash
+retro_system_directory\[mame|mess|ume]\hash
+- inipath
+retro_system_directory\[mame|mess|ume]\ini
 
-Cheats need to be extracted, loading from a 7z won't work here
+** Cheats need to be extracted, loading from a 7z didn't work for me but some users reported it is working. Needs testing

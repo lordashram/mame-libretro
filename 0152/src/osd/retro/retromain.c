@@ -119,6 +119,7 @@ int vertical,orient;
 static char MgamePath[1024];
 static char MgameName[512];
 static char MsystemName[512];
+static char gameName[1024];
 
 static int FirstTimeUpdate = 1;
 
@@ -295,15 +296,15 @@ int executeGame(char* path) {
 	result = parsePath(path, MgamePath, MgameName);
 	if (result == 0) {
 		write_log("parse path failed! path=%s\n", path);
-		strcpy(MgameName,path );
+		strcpy(MgameName,path);
 	//	return -1;
 	}
-
+	
 	//split the path to directory and the name without the zip extension
 	result = parseSystemName(path, MsystemName);
 	if (result == 0) {
 		write_log("parse path failed! path=%s\n", path);
-		strcpy(MgameName,path );
+		strcpy(MsystemName,path );
 	//	return -1;
 	}
 	
@@ -313,7 +314,7 @@ int executeGame(char* path) {
 		return -2;
 	}
 
-	//tate enabled
+	//tate enabled	
 	if (tate) {
 		//horizontal game
 		if (gameRot == ROT0) {
@@ -334,17 +335,12 @@ int executeGame(char* path) {
 			}
 		}
 	}
-
+	
 	write_log("creating frontend... game=%s\n", MgameName);
-	
-	
-
 	//find how many parameters we have
 	for (paramCount = 0; xargv[paramCount] != NULL; paramCount++)
 		printf("args: %s\n",xargv[paramCount]);
   
-	
-
 	xargv[paramCount++] = (char*)g_rom_dir;
 	xargv[paramCount++] = (char*)("-cfg_directory");
 	
@@ -429,20 +425,22 @@ int executeGame(char* path) {
 #ifdef WANT_MAME	
    xargv[paramCount++] = MgameName;
 #elif WANT_MESS
+    xargv[paramCount++] = MsystemName;
+    xargv[paramCount++] = (char*)"-cart";
+    xargv[paramCount++] = (char*)gameName;  
+#elif WANT_UME
+   //haven't tested UME proper yet so I don't know if this works
    xargv[paramCount++] = MsystemName;
    xargv[paramCount++] = (char*)"-cart";
-   xargv[paramCount++] = MgameName;
-#elif WANT_UME
-   xargv[paramCount++] = MsystemName;
    xargv[paramCount++] = MgameName;          
 #endif 	
 	
-	write_log("executing frontend... params:%i\n parameters:\n", paramCount);
+	write_log("frontend parameters:%i\n", paramCount);
 
-	for (int i = 1; xargv[i] != NULL; i++){
-		write_log("%s ",xargv[i]);
+	for (int i = 0; xargv[i] != NULL; i++){
+		write_log("  %s\n",xargv[i]);
 	}
-
+	
 	osd_init_midi();
 
 	cli_options MRoptions;
@@ -451,7 +449,6 @@ int executeGame(char* path) {
 	result = frontend.execute(paramCount, ( char **)xargv); 
 
 	xargv[paramCount - 2] = NULL;
-
 	return result;
 } 
  
@@ -464,10 +461,11 @@ extern "C"
 #endif
 int mmain(int argc, const char *argv)
 {
-	static char gameName[1024];
-	int result = 0;
 
+	int result = 0;
+	
 	strcpy(gameName,argv);
+	write_log("executing game... %s\n", gameName);
 	result = executeGame(gameName);
 	return 1;
 }

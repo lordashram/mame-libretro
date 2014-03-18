@@ -51,8 +51,10 @@ LIBS =
 
 ifeq ($(TARGET), mess)
 CORE_DEFINE := -DWANT_MESS
-else
+else ifeq ($(TARGET), mess)
 CORE_DEFINE := -DWANT_MAME
+else
+CORE_DEFINE := -DWANT_UME
 endif
 $(info COREDEF = $(CORE_DEFINE))
 
@@ -347,6 +349,9 @@ OSD=retro
 
 NOWERROR = 1
 
+ifndef PARTIAL
+PARTIAL = 0
+endif
 
 #-------------------------------------------------
 # specify core target: mame, mess, etc.
@@ -725,16 +730,29 @@ tools: maketree $(TOOLS)
 maketree: $(sort $(OBJDIRS))
 
 clean: $(OSDCLEAN)
-	@echo Deleting object tree $(OBJ)...
-	$(RM) -r obj/*
-	@echo Deleting $(EMULATOR)...
-	$(RM) $(EMULATOR)
-	@echo Deleting $(TOOLS)...
-	$(RM) $(TOOLS)
-	@echo Deleting dependencies...
-	$(RM) depend_mame.mak
-	$(RM) depend_mess.mak
-	$(RM) depend_ume.mak
+ifeq ($(PARTIAL),1)	
+		@echo Deleting object tree $(OBJ)...
+		$(RM) -r obj/retro64/osd/*
+		@echo Deleting $(EMULATOR)...
+		$(RM) $(EMULATOR)
+		@echo Deleting $(TOOLS)...
+		$(RM) $(TOOLS)
+		@echo Deleting dependencies...
+		$(RM) depend_mame.mak
+		$(RM) depend_mess.mak
+		$(RM) depend_ume.mak
+else	
+		@echo Deleting object tree $(OBJ)...
+		$(RM) -r obj/*
+		@echo Deleting $(EMULATOR)...
+		$(RM) $(EMULATOR)
+		@echo Deleting $(TOOLS)...
+		$(RM) $(TOOLS)
+		@echo Deleting dependencies...
+		$(RM) depend_mame.mak
+		$(RM) depend_mess.mak
+		$(RM) depend_ume.mak
+endif
 
 checkautodetect:
 	@echo TARGETOS=$(TARGETOS)
