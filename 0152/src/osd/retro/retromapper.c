@@ -41,7 +41,16 @@ void retro_set_environment(retro_environment_t cb)
       { "mame_current_mouse_enable", "Mouse supported; disabled|enabled" },
       { "mame_current_videoapproach1_enable", "Video approach 1 Enabled; disabled|enabled" },
       { "mame_current_nagscreenpatch_enable", "Nagscreen patch Enabled; disabled|enabled" },
-	  //{ "mame_extra_content", "Look for additional content in ; system|content" },	  
+#ifdef WANT_MAME
+      //{ "mame_extra_content", "Look for additional content in ; system|content" },	  	    
+#elif WANT_MESS
+      //{ "mess_media_type", "Auto media type; enabled|disabled" },   
+      { "mess_media_type", "Media type; cart|flop|crdm|cass|hard|serl|prin" },   
+#elif WANT_UME
+   
+#else
+   
+#endif   
       { NULL, NULL },
    };
 
@@ -88,6 +97,17 @@ static void check_variables(void)
          videoapproach1_enable = true;
    }
 
+   var.key = "mess_media_type";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      fprintf(stderr, "value: %s\n", var.value);
+      sprintf(messMediaType,"-%s",var.value);
+	  fprintf(stderr, "mess value: %s\n", messMediaType);
+
+   }
+   
 }
 
 unsigned retro_api_version(void)

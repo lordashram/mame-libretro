@@ -17,7 +17,7 @@
 static int ui_ipt_pushchar=-1;
 
 char g_rom_dir[1024];
-
+char messMediaType[10];
 
 #ifdef _WIN32
 char slash = '\\';
@@ -426,7 +426,7 @@ int executeGame(char* path) {
    xargv[paramCount++] = MgameName;
 #elif WANT_MESS
    xargv[paramCount++] = MsystemName;
-   xargv[paramCount++] = (char*)"-cart";
+   xargv[paramCount++] = (char*)messMediaType;
    xargv[paramCount++] = (char*)gameName;  
 #elif WANT_UME
    //haven't tested UME proper yet so I don't know if this works
@@ -435,7 +435,7 @@ int executeGame(char* path) {
    xargv[paramCount++] = MgameName;          
 #else
    xargv[paramCount++] = MgameName;   
-#endif 	
+#endif 	 
 	
 	write_log("frontend parameters:%i\n", paramCount);
 
