@@ -67,7 +67,6 @@ $(info COREDEF = $(CORE_DEFINE))
 #-------------------------------------------------
 
 # start with empties for everything
-PTR64=1
 CCOMFLAGS = -DDISABLE_MIDI
 CONLYFLAGS = -fpermissive
 CONLYFLAGS += $(CORE_DEFINE)
@@ -791,13 +790,16 @@ $(OBJ)/build/png2bdc:
 	cp -R prec-build/png2bdc $(OBJ)/build 
 
 $(OBJ)/build/makedep:
-	cp -R prec-build/makelist $(OBJ)/build
+	cp -R prec-build/makedep $(OBJ)/build
 
 $(OBJ)/build/makelist:
 	cp -R prec-build/makelist $(OBJ)/build
 
 $(OBJ)/build/verinfo:
 	cp -R prec-build/verinfo $(OBJ)/build 
+
+$(OBJ)/build/makemak:
+	cp -R prec-build/makemak $(OBJ)/build
 endif
 endif
 #-------------------------------------------------
