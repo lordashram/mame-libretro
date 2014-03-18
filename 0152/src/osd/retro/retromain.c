@@ -421,18 +421,20 @@ int executeGame(char* path) {
 			xargv[paramCount++] = (char*)(screenRot ? "-ror" : "-mouse");
 		}
 	}
-	
+
 #ifdef WANT_MAME	
    xargv[paramCount++] = MgameName;
 #elif WANT_MESS
-    xargv[paramCount++] = MsystemName;
-    xargv[paramCount++] = (char*)"-cart";
-    xargv[paramCount++] = (char*)gameName;  
+   xargv[paramCount++] = MsystemName;
+   xargv[paramCount++] = (char*)"-cart";
+   xargv[paramCount++] = (char*)gameName;  
 #elif WANT_UME
    //haven't tested UME proper yet so I don't know if this works
    xargv[paramCount++] = MsystemName;
    xargv[paramCount++] = (char*)"-cart";
    xargv[paramCount++] = MgameName;          
+#else
+   xargv[paramCount++] = MgameName;   
 #endif 	
 	
 	write_log("frontend parameters:%i\n", paramCount);

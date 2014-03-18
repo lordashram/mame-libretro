@@ -51,7 +51,7 @@ LIBS =
 
 ifeq ($(TARGET), mess)
 CORE_DEFINE := -DWANT_MESS
-else ifeq ($(TARGET), mess)
+else ifeq ($(TARGET), mame)
 CORE_DEFINE := -DWANT_MAME
 else
 CORE_DEFINE := -DWANT_UME
