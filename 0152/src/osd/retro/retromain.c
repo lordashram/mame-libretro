@@ -1,5 +1,6 @@
 #include <unistd.h>
 #include <stdint.h>
+#include <string.h>
 
 #include "osdepend.h"
 
@@ -16,7 +17,7 @@
 static int ui_ipt_pushchar=-1;
 
 char g_rom_dir[1024];
-
+char messMediaType[10];
 
 #ifdef _WIN32
 char slash = '\\';
@@ -24,9 +25,13 @@ char slash = '\\';
 char slash = '/';
 #endif
 
-
-
-
+#ifdef WANT_MAME
+const char core[] = "mame";
+#elif WANT_MESS
+const char core[] = "mess";
+#elif WANT_UME
+const char core[] = "ume";
+#endif 	
 
 #define M16B
 
@@ -69,6 +74,7 @@ static void extract_directory(char *buf, const char *path, size_t size)
    else
       buf[0] = '\0';
 }
+
 //============================================================
 //  CONSTANTS
 //============================================================
@@ -112,6 +118,8 @@ int vertical,orient;
 
 static char MgamePath[1024];
 static char MgameName[512];
+static char MsystemName[512];
+static char gameName[1024];
 
 static int FirstTimeUpdate = 1;
 
@@ -144,12 +152,6 @@ static const char* xargv[] = {
 	"-samplerate",
 	"48000",
 	"-sound",
-	"-contrast",
-	"1.0",
-	"-brightness",
-	"1.0",
-	"-gamma",
-	"1.0",
 	"-cheat",
 	"-rompath",
 	NULL,
@@ -181,6 +183,7 @@ static const char* xargv[] = {
 	NULL,	
 	NULL,	
 	NULL,	
+	NULL,
 };
 
 static int parsePath(char* path, char* gamePath, char* gameName) {
@@ -188,12 +191,14 @@ static int parsePath(char* path, char* gamePath, char* gameName) {
 	int slashIndex = -1;
 	int dotIndex = -1;
 	int len = strlen(path);
+	
+		
 	if (len < 1) {
 		return 0;
 	}
 
 	for (i = len - 1; i >=0; i--) {
-		if (path[i] == '/') {
+		if (path[i] == slash) {
 			slashIndex = i;
 			break;
 		} else
@@ -213,6 +218,38 @@ static int parsePath(char* path, char* gamePath, char* gameName) {
 	write_log("gamePath=%s gameName=%s\n", gamePath, gameName);
 	return 1;
 }
+
+static int parseSystemName(char* path, char* systemName) {
+	int i;
+	int j=0;
+	int slashIndex[2];
+	int len = strlen(path);
+	
+	if (len < 1) {
+		return 0;
+	}
+
+	for (i = len - 1; i >=0; i--) {
+		if (j<2)
+		{
+		   if (path[i] == slash) {
+			   slashIndex[j] = i;
+			   j++;
+		   } 
+		}
+		else
+		   break;
+	}
+	if (slashIndex < 0 ) {
+		return 0;
+	}
+	
+	strncpy(systemName, path + (slashIndex[1] +1), slashIndex[0]-slashIndex[1]-1);
+	
+	write_log("systemName=%s\n", systemName);
+	return 1;
+}
+
 
 static int getGameInfo(char* gameName, int* rotation, int* driverIndex) {
 	int gameFound = 0;
@@ -244,7 +281,7 @@ static int getGameInfo(char* gameName, int* rotation, int* driverIndex) {
 int executeGame(char* path) {
 	// cli_frontend does the heavy lifting; if we have osd-specific options, we
 	// create a derivative of cli_options and add our own
-
+	
 	int paramCount;
 	int result = 0;
 	int gameRot=0;
@@ -254,22 +291,30 @@ int executeGame(char* path) {
 	FirstTimeUpdate = 1;
 
 	screenRot = 0;
-
+	
 	//split the path to directory and the name without the zip extension
 	result = parsePath(path, MgamePath, MgameName);
 	if (result == 0) {
 		write_log("parse path failed! path=%s\n", path);
-		strcpy(MgameName,path );
+		strcpy(MgameName,path);
 	//	return -1;
 	}
-
-	//Find the game info. Exit if game driver was not found.
+	
+	//split the path to directory and the name without the zip extension
+	result = parseSystemName(path, MsystemName);
+	if (result == 0) {
+		write_log("parse path failed! path=%s\n", path);
+		strcpy(MsystemName,path );
+	//	return -1;
+	}
+	
+	//find the game info. Exit if game driver was not found.
 	if (getGameInfo(MgameName, &gameRot, &driverIndex) == 0) {
 		write_log("game not found: %s\n", MgameName);
 		return -2;
 	}
 
-	//tate enabled
+	//tate enabled	
 	if (tate) {
 		//horizontal game
 		if (gameRot == ROT0) {
@@ -290,75 +335,78 @@ int executeGame(char* path) {
 			}
 		}
 	}
-
+	
 	write_log("creating frontend... game=%s\n", MgameName);
-	
-	
-
 	//find how many parameters we have
 	for (paramCount = 0; xargv[paramCount] != NULL; paramCount++)
 		printf("args: %s\n",xargv[paramCount]);
   
-	xargv[paramCount++] = (char*)g_rom_dir;	
+	xargv[paramCount++] = (char*)g_rom_dir;
 	xargv[paramCount++] = (char*)("-cfg_directory");
 	
 	char cfg_dir[256];
-	sprintf(cfg_dir, "%s%c%s%c%s", retro_save_directory, slash, "mame", slash, "cfg");
+	sprintf(cfg_dir, "%s%c%s%c%s", retro_save_directory, slash, core, slash, "cfg");
 	xargv[paramCount++] = (char*)(cfg_dir);
 	
 	xargv[paramCount++] = (char*)("-nvram_directory");
 	
 	char nv_dir[256];
-	sprintf(nv_dir, "%s%c%s%c%s", retro_save_directory, slash, "mame", slash, "nvram");
+	sprintf(nv_dir, "%s%c%s%c%s", retro_save_directory, slash, core, slash, "nvram");
 	xargv[paramCount++] = (char*)(nv_dir);
 	
 	xargv[paramCount++] = (char*)("-memcard_directory");
 	
 	char mem_dir[256];
-	sprintf(mem_dir, "%s%c%s%c%s", retro_save_directory, slash, "mame", slash, "memcard");
+	sprintf(mem_dir, "%s%c%s%c%s", retro_save_directory, slash, core, slash, "memcard");
 	xargv[paramCount++] = (char*)(mem_dir);
 		
 	xargv[paramCount++] = (char*)("-input_directory");
 	
 	char inp_dir[256];
-	sprintf(inp_dir, "%s%c%s%c%s", retro_save_directory, slash, "mame", slash, "input");
+	sprintf(inp_dir, "%s%c%s%c%s", retro_save_directory, slash, core, slash, "input");
 	xargv[paramCount++] = (char*)(inp_dir);
 	
 	xargv[paramCount++] = (char*)("-state_directory");
 	
 	char state_dir[256];
-	sprintf(state_dir, "%s%c%s%c%s", retro_save_directory, slash, "mame", slash, "states");
+	sprintf(state_dir, "%s%c%s%c%s", retro_save_directory, slash, core, slash, "states");
 	xargv[paramCount++] = (char*)(state_dir);
 		
 	xargv[paramCount++] = (char*)("-snapshot_directory");
 	
 	char snap_dir[256];
-	sprintf(snap_dir, "%s%c%s%c%s", retro_save_directory, slash, "mame", slash, "snaps");
+	sprintf(snap_dir, "%s%c%s%c%s", retro_save_directory, slash, core, slash, "snaps");
 	xargv[paramCount++] = (char*)(snap_dir);
 		
 	xargv[paramCount++] = (char*)("-diff_directory");
 
 	char diff_dir[256];
-	sprintf(diff_dir, "%s%c%s%c%s", retro_save_directory, slash, "mame", slash, "diff");
+	sprintf(diff_dir, "%s%c%s%c%s", retro_save_directory, slash, core, slash, "diff");
 	xargv[paramCount++] = (char*)(diff_dir);
 	
 	xargv[paramCount++] = (char*)("-samplepath");
 	
 	char samples_dir[256];
-	sprintf(samples_dir, "%s%c%s%c%s", retro_system_directory, slash, "mame", slash, "samples");
+	sprintf(samples_dir, "%s%c%s%c%s", retro_system_directory, slash, core, slash, "samples");
 	xargv[paramCount++] = (char*)(samples_dir);
 	
 	xargv[paramCount++] = (char*)("-artpath");
 	
 	char art_dir[256];
-	sprintf(art_dir, "%s%c%s%c%s", retro_system_directory, slash, "mame", slash, "artwork");
+	sprintf(art_dir, "%s%c%s%c%s", retro_system_directory, slash, core, slash, "artwork");
 	xargv[paramCount++] = (char*)(art_dir);
 		
 	xargv[paramCount++] = (char*)("-cheatpath");
 	
 	char cheat_dir[256];
-	sprintf(cheat_dir, "%s%c%s%c%s", retro_system_directory, slash, "mame", slash, "cheat");
+	sprintf(cheat_dir, "%s%c%s%c%s", retro_system_directory, slash, core, slash, "cheat");
 	xargv[paramCount++] = (char*)(cheat_dir);
+	
+	xargv[paramCount++] = (char*)("-inipath");
+	
+	char ini_dir[256];
+	sprintf(ini_dir, "%s%c%s%c%s", retro_system_directory, slash, core, slash, "ini");
+	xargv[paramCount++] = (char*)(ini_dir);	
 	
 	if (tate) {
 		if (screenRot == 3) {
@@ -374,19 +422,27 @@ int executeGame(char* path) {
 		}
 	}
 
-	if(strcmp(MgameName,"createconfig")==0){
-
-		xargv[paramCount++] = (char*) "-cc";
-	}
-	else
-		xargv[paramCount++] = MgameName;
-
-	write_log("executing frontend... params:%i\n parameters:", paramCount);
+#ifdef WANT_MAME	
+   xargv[paramCount++] = MgameName;
+#elif WANT_MESS
+   xargv[paramCount++] = MsystemName;
+   xargv[paramCount++] = (char*)messMediaType;
+   xargv[paramCount++] = (char*)gameName;  
+#elif WANT_UME
+   //haven't tested UME proper yet so I don't know if this works
+   xargv[paramCount++] = MsystemName;
+   xargv[paramCount++] = (char*)"-cart";
+   xargv[paramCount++] = MgameName;          
+#else
+   xargv[paramCount++] = MgameName;   
+#endif 	 
+	
+	write_log("frontend parameters:%i\n", paramCount);
 
 	for (int i = 0; xargv[i] != NULL; i++){
-		write_log("%s \n",xargv[i]);
+		write_log("  %s\n",xargv[i]);
 	}
-
+	
 	osd_init_midi();
 
 	cli_options MRoptions;
@@ -395,7 +451,6 @@ int executeGame(char* path) {
 	result = frontend.execute(paramCount, ( char **)xargv); 
 
 	xargv[paramCount - 2] = NULL;
-
 	return result;
 } 
  
@@ -408,10 +463,11 @@ extern "C"
 #endif
 int mmain(int argc, const char *argv)
 {
-	static char gameName[1024];
-	int result = 0;
 
+	int result = 0;
+	
 	strcpy(gameName,argv);
+	write_log("executing game... %s\n", gameName);
 	result = executeGame(gameName);
 	return 1;
 }

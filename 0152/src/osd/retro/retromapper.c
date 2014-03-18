@@ -41,7 +41,16 @@ void retro_set_environment(retro_environment_t cb)
       { "mame_current_mouse_enable", "Mouse supported; disabled|enabled" },
       { "mame_current_videoapproach1_enable", "Video approach 1 Enabled; disabled|enabled" },
       { "mame_current_nagscreenpatch_enable", "Nagscreen patch Enabled; disabled|enabled" },
-	  //{ "mame_extra_content", "Look for additional content in ; system|content" },	  
+#ifdef WANT_MAME
+      //{ "mame_extra_content", "Look for additional content in ; system|content" },	  	    
+#elif WANT_MESS
+      //{ "mess_media_type", "Auto media type; enabled|disabled" },   
+      { "mess_media_type", "Media type; cart|flop|crdm|cass|hard|serl|prin" },   
+#elif WANT_UME
+   
+#else
+   
+#endif   
       { NULL, NULL },
    };
 
@@ -88,6 +97,17 @@ static void check_variables(void)
          videoapproach1_enable = true;
    }
 
+   var.key = "mess_media_type";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      fprintf(stderr, "value: %s\n", var.value);
+      sprintf(messMediaType,"-%s",var.value);
+	  fprintf(stderr, "mess value: %s\n", messMediaType);
+
+   }
+   
 }
 
 unsigned retro_api_version(void)
@@ -98,7 +118,16 @@ unsigned retro_api_version(void)
 void retro_get_system_info(struct retro_system_info *info)
 {   	
    memset(info, 0, sizeof(*info));
+#ifdef WANT_MAME
    info->library_name = "MAME 2014";
+#elif WANT_MESS
+   info->library_name = "MESS 2014";
+#elif WANT_UME
+   info->library_name = "UME 2014";   
+#else
+   info->library_name = "N/D";
+#endif   
+   
    info->library_version = "0.152";
    info->valid_extensions = "zip|chd|7z";
    info->need_fullpath = true;   
@@ -252,6 +281,7 @@ bool retro_load_game(const struct retro_game_info *info)
 	memset(videoBuffer,0,1024*1024*2*2);
 #endif
 	char basename[128];
+	
 	extract_basename(basename, info->path, sizeof(basename));
   	extract_directory(g_rom_dir, info->path, sizeof(g_rom_dir));
 	strcpy(RPATH,info->path);
