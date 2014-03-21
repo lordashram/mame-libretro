@@ -424,17 +424,14 @@ int executeGame(char* path) {
 
 #ifdef WANT_MAME	
    xargv[paramCount++] = MgameName;
-#elif WANT_MESS
+#else
+  if (strcmp(messMediaType, "-rom") == 0) {
+   xargv[paramCount++] = MgameName;
+  } else {
    xargv[paramCount++] = MsystemName;
    xargv[paramCount++] = (char*)messMediaType;
-   xargv[paramCount++] = (char*)gameName;  
-#elif WANT_UME
-   //haven't tested UME proper yet so I don't know if this works
-   xargv[paramCount++] = MsystemName;
-   xargv[paramCount++] = (char*)"-cart";
-   xargv[paramCount++] = MgameName;          
-#else
-   xargv[paramCount++] = MgameName;   
+   xargv[paramCount++] = (char*)gameName;
+  }
 #endif 	 
 	
 	write_log("frontend parameters:%i\n", paramCount);

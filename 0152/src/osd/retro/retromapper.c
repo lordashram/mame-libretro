@@ -47,7 +47,8 @@ void retro_set_environment(retro_environment_t cb)
       //{ "mess_media_type", "Auto media type; enabled|disabled" },   
       { "mess_media_type", "Media type; cart|flop|crdm|cass|hard|serl|prin" },   
 #elif WANT_UME
-   
+      //{ "mess_media_type", "Auto media type; enabled|disabled" },   
+      { "mess_media_type", "Media type; cart|rom|flop|crdm|cass|hard|serl|prin" }, 
 #else
    
 #endif   
