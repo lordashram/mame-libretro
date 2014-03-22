@@ -146,7 +146,7 @@ cothread_t emuThread;
 //============================================================
 
 static const char* xargv[] = {
-	"mamemini",
+	"mame-libretro",
 	"-joystick",
 	"-noautoframeskip",
 	"-samplerate",
@@ -252,29 +252,23 @@ static int parseSystemName(char* path, char* systemName) {
 
 
 static int getGameInfo(char* gameName, int* rotation, int* driverIndex) {
+	
 	int gameFound = 0;
-	int drvindex;
-//FIXME for 0.149 , prevouisly in driver.h
-#if 0
-	//check invalid game name
-	if (gameName[0] == 0) {
-		return 0;
-	}
+	int num=driver_list::find(gameName);
 
-	for (drvindex = 0; drivers[drvindex]; drvindex++) {
-		if ( (drivers[drvindex]->flags & GAME_NO_STANDALONE) == 0 &&
-			mame_strwildcmp(gameName, drivers[drvindex]->name) == 0 ) {
-				gameFound = 1;
-				*driverIndex = drvindex;
-				*rotation = drivers[drvindex]->flags & 0x7;
-				write_log("%-18s\"%s\" rot=%i \n", drivers[drvindex]->name, drivers[drvindex]->description, *rotation);
-		}
+	if (num != -1){
+		fprintf(stderr, "%-18s%s\n", driver_list::driver(num).name, driver_list::driver(num).description);
+
+		if(driver_list::driver(num).flags& GAME_TYPE_ARCADE)write_log("type: ARCADE system\n");
+		else if(driver_list::driver(num).flags& GAME_TYPE_CONSOLE)write_log("type: CONSOLE system\n");
+		else if(driver_list::driver(num).flags& GAME_TYPE_COMPUTER)write_log("type: COMPUTER system\n");
+		gameFound = 1;
 	}
-#else 
-	gameFound = 1;
-#endif
+	else	write_log("Error Driver %s not found!\n", gameName);
+
 	return gameFound;
 } 
+
 
 #include "../portmedia/pmmidi.c"
 
