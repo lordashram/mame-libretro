@@ -50,15 +50,12 @@ GLOBAL:
 MAME
 
 * core option to disable per driver mappings and default to a single retropad assignment
-* core option to select additional content location (artwork/samples/etc) between contentdir and systemdir
+* core option to select additional content location (artwork/samples/etc) between CONTENTDIR and SYSTEMDIR
 
 MESS
 
-* ONLY CART GAMES WORKING AS OF NOW
-* autodetection of media type for common systems
 * global retropad assignment
 * per driver retropad mappings for common systems
-* support for soflist games
 
 UME
 
@@ -66,6 +63,7 @@ UME
 
 NOTES:
 
+* Softlists are now supported and enabled by default (check core options)
 * Path management has been reworked:
 
 If RetroArch includes RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY it will try to use the path defined in retroarch.cfg. 
@@ -104,3 +102,11 @@ retro_system_directory\[mame|mess|ume]\hash
 retro_system_directory\[mame|mess|ume]\ini
 
 ** Cheats need to be extracted, loading from a 7z didn't work for me but some users reported it is working. Needs testing
+** Softlist games just work, but you need the hash database and the roms in the correct folders with the correct names, for example:
+
+NES SMB should be in rompath\nes\smb.zip
+HASHES should be in SYSTEMDIR\[mame|mess|ume]\hashes
+
+
+
+

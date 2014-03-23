@@ -19,6 +19,9 @@ static int ui_ipt_pushchar=-1;
 char g_rom_dir[1024];
 char messMediaType[10];
 
+static bool softlist_enabled;
+static bool bios_enabled;
+
 #ifdef _WIN32
 char slash = '\\';
 #else
@@ -146,7 +149,7 @@ cothread_t emuThread;
 //============================================================
 
 static const char* xargv[] = {
-	"mame-libretro",
+	core,
 	"-joystick",
 	"-noautoframeskip",
 	"-samplerate",
@@ -302,11 +305,13 @@ int executeGame(char* path) {
 	//	return -1;
 	}
 	
+#ifdef WANT_MAME	
 	//find the game info. Exit if game driver was not found.
 	if (getGameInfo(MgameName, &gameRot, &driverIndex) == 0) {
 		write_log("game not found: %s\n", MgameName);
 		return -2;
 	}
+#endif	
 
 	//tate enabled	
 	if (tate) {
@@ -331,11 +336,15 @@ int executeGame(char* path) {
 	}
 	
 	write_log("creating frontend... game=%s\n", MgameName);
+	printf("using softlists: %d\n", softlist_enabled);
 	//find how many parameters we have
 	for (paramCount = 0; xargv[paramCount] != NULL; paramCount++)
 		printf("args: %s\n",xargv[paramCount]);
-  
-	xargv[paramCount++] = (char*)g_rom_dir;
+
+	char rom_dir[256];
+	sprintf(rom_dir, "%s", MgamePath);
+	xargv[paramCount++] = (char*)(rom_dir);		
+	
 	xargv[paramCount++] = (char*)("-cfg_directory");
 	
 	char cfg_dir[256];
@@ -402,6 +411,12 @@ int executeGame(char* path) {
 	sprintf(ini_dir, "%s%c%s%c%s", retro_system_directory, slash, core, slash, "ini");
 	xargv[paramCount++] = (char*)(ini_dir);	
 	
+	xargv[paramCount++] = (char*)("-hashpath");
+	
+	char hash_dir[256];
+	sprintf(hash_dir, "%s%c%s%c%s", retro_system_directory, slash, core, slash, "hash");
+	xargv[paramCount++] = (char*)(hash_dir);		
+	
 	if (tate) {
 		if (screenRot == 3) {
 			xargv[paramCount++] =(char*) "-rol";
@@ -419,13 +434,23 @@ int executeGame(char* path) {
 #ifdef WANT_MAME	
    xargv[paramCount++] = MgameName;
 #else
-  if (strcmp(messMediaType, "-rom") == 0) {
-   xargv[paramCount++] = MgameName;
-  } else {
-   xargv[paramCount++] = MsystemName;
-   xargv[paramCount++] = (char*)messMediaType;
-   xargv[paramCount++] = (char*)gameName;
-  }
+   if(softlist_enabled)
+   {
+      xargv[paramCount++] = MsystemName;   
+	  if(!bios_enabled)
+         xargv[paramCount++] = (char*)MgameName;        
+   }
+   else
+   {
+      if (strcmp(messMediaType, "-rom") == 0) {
+         xargv[paramCount++] = MgameName;
+      } else {
+         xargv[paramCount++] = MsystemName;
+         xargv[paramCount++] = (char*)messMediaType;
+         xargv[paramCount++] = (char*)gameName;
+      }   
+   
+   }
 #endif 	 
 	
 	write_log("frontend parameters:%i\n", paramCount);
