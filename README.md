@@ -1,12 +1,10 @@
 mame-libretro
 =============
 
-Mainline MAME/MESS/UME (0.152) for libretro (with libco) . WIP. Expect bugs
+Mainline MAME/MESS/UME for libretro (with libco). 
+Always WIP, bugs are expected
 
-Source base is mame0.152 official source: 
-http://www.mamedev.org/downloader.php?file=releases/mame0152s.zip
-
-BUILD:
+BUILD INSTRUCTIONS:
 
 * build for pc linux/win:
 
@@ -46,16 +44,17 @@ GLOBAL:
 
 * sample rate or refresh rate on the fly
 * rework global inputs
+* rework per driver inputs
+* core option to disable per driver inputs and default to a standard retropad assgnment
+* core option to select additional content location (artwork/samples/etc) between CONTE
 
 MAME
 
-* core option to disable per driver mappings and default to a single retropad assignment
-* core option to select additional content location (artwork/samples/etc) between CONTENTDIR and SYSTEMDIR
+--
 
 MESS
 
-* global retropad assignment
-* per driver retropad mappings for common systems
+--
 
 UME
 
@@ -63,8 +62,9 @@ UME
 
 NOTES:
 
-* Softlists are now supported and enabled by default (check core options)
-* Path management has been reworked:
+* softlists are now supported (enabled by default)
+* booting to bios on supported systems is now possible (disabled by default)
+* path management has been reworked:
 
 If RetroArch includes RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY it will try to use the path defined in retroarch.cfg. 
 If no path is defined or RetroArch doesn't yet include RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY then it will use 
@@ -101,12 +101,9 @@ retro_system_directory\[mame|mess|ume]\hash
 - inipath
 retro_system_directory\[mame|mess|ume]\ini
 
-** Cheats need to be extracted, loading from a 7z didn't work for me but some users reported it is working. Needs testing
-** Softlist games just work, but you need the hash database and the roms in the correct folders with the correct names, for example:
+** cheats need to be extracted, loading from a 7z didn't work for me but some users reported it is working.
+   needs more testing since some users reported compressed cheats work
+*** softlist games just work, you need the hash database and the roms in the correct folders with the correct names, for example:
 
 NES SMB should be in rompath\nes\smb.zip
 HASHES should be in SYSTEMDIR\[mame|mess|ume]\hashes
-
-
-
-
