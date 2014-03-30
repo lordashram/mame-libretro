@@ -38,20 +38,33 @@ void retro_set_audio_sample(retro_audio_sample_t cb) { }
 void retro_set_environment(retro_environment_t cb)
 {
    static const struct retro_variable vars[] = {
-      { "mame_current_mouse_enable", "Mouse supported; disabled|enabled" },
-      { "mame_current_videoapproach1_enable", "Video approach 1 Enabled; disabled|enabled" },
-      { "mame_current_nagscreenpatch_enable", "Nagscreen patch Enabled; disabled|enabled" },
-#ifdef WANT_MAME
-      //{ "mame_extra_content", "Look for additional content in ; system|content" },	  	    
-#elif WANT_MESS
-      { "mess_softlist_enable", "Use softlists; enabled|disabled" },   
-	  { "mess_boot_bios", "Load BIOS only; disabled|enabled" },   
-      { "mess_media_type", "Media type; cart|flop|cdrm|cass|hard|serl|prin" },   
-	  
-#elif WANT_UME
-      { "mess_softlist_enable", "Use softlists; enabled|disabled" },   
-      { "mess_media_type", "Media type; cart|rom|flop|cdrm|cass|hard|serl|prin" },   
+#if defined(WANT_MAME)
+      { "mame_current_mouse_enable", "Enable mouse; disabled|enabled" },
+	  { "mame_current_nagscreenpatch_enable", "Enable nagscreen patch; disabled|enabled" },      
+      { "mame_current_videoapproach1_enable", "Enable video approach 1; disabled|enabled" },
+	  { "mame_boot_osd", "Boot to OSD; disabled|enabled" },
+#elif defined(WANT_MESS)
+      { "mess_current_mouse_enable", "Enable mouse; disabled|enabled" },
+	  { "mess_current_nagscreenpatch_enable", "Enable nagscreen patch; disabled|enabled" },      
+      { "mess_current_videoapproach1_enable", "Enable video approach 1; disabled|enabled" },
+      { "mess_softlist_enable", "Enable softlists; enabled|disabled" },
+	  { "mess_softlist_auto", "Softlist automatic media type; enabled|disabled" },
+      { "mess_media_type", "Media type; cart|flop|cdrm|cass|hard|serl|prin" },   	  
+	  { "mess_boot_bios", "Boot to BIOS; disabled|enabled" },
+	  { "mess_boot_osd", "Boot to OSD; disabled|enabled" },
+	  { "mess_commandline", "Boot from CLI; disabled|enabled" },
+#elif defined(WANT_UME)
+      { "ume_current_mouse_enable", "Enable mouse; disabled|enabled" },
+	  { "ume_current_nagscreenpatch_enable", "Enable nagscreen patch; disabled|enabled" },      
+      { "ume_current_videoapproach1_enable", "Enable video approach 1; disabled|enabled" },
+      { "ume_softlist_enable", "Enable softlists; enabled|disabled" },
+	  { "ume_softlist_auto", "Softlist automatic media type; enabled|disabled" },
+      { "ume_media_type", "Media type; rom|cart|flop|cdrm|cass|hard|serl|prin" },   	  
+	  { "ume_boot_bios", "Boot to BIOS; disabled|enabled" },
+	  { "ume_boot_osd", "Boot to OSD; disabled|enabled" },
+	  { "ume_commandline", "Boot from CLI; disabled|enabled" },
 #endif   
+	  { "experimental_commandline", "Experimental CLI; disabled|enabled" },
       { NULL, NULL },
    };
 
@@ -63,8 +76,23 @@ void retro_set_environment(retro_environment_t cb)
 static void check_variables(void)
 {
    struct retro_variable var = {0};
-   var.key = "mame_current_mouse_enable";
 
+   var.key = "experimental_commandline";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      fprintf(stderr, "value: %s\n", var.value);
+      if (strcmp(var.value, "enabled") == 0)
+         experimental_cmdline = true;
+      if (strcmp(var.value, "disabled") == 0)
+         experimental_cmdline = false;       
+   }   
+
+#if defined(WANT_MAME)
+
+   var.key = "mame_current_mouse_enable";
+   
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
       fprintf(stderr, "value: %s\n", var.value);
@@ -97,6 +125,55 @@ static void check_variables(void)
       if (strcmp(var.value, "enabled") == 0)
          videoapproach1_enable = true;
    }
+   
+   var.key = "mame_boot_osd";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      fprintf(stderr, "value: %s\n", var.value);
+      if (strcmp(var.value, "enabled") == 0)
+         boot_to_osd_enabled = true;
+      if (strcmp(var.value, "disabled") == 0)
+         boot_to_osd_enabled = false;       
+   }   
+
+#elif defined(WANT_MESS)
+
+   var.key = "mess_current_mouse_enable";
+   
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      fprintf(stderr, "value: %s\n", var.value);
+      if (strcmp(var.value, "disabled") == 0)
+         mouse_enable = false;
+      if (strcmp(var.value, "enabled") == 0)
+         mouse_enable = true;
+   }
+
+   var.key = "mess_current_nagscreenpatch_enable";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      fprintf(stderr, "value: %s\n", var.value);
+      if (strcmp(var.value, "disabled") == 0)
+         nagscreenpatch_enable = false;
+      if (strcmp(var.value, "enabled") == 0)
+         nagscreenpatch_enable = true;
+   }
+
+   var.key = "mess_current_videoapproach1_enable";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      fprintf(stderr, "value: %s\n", var.value);
+      if (strcmp(var.value, "disabled") == 0)
+         videoapproach1_enable = false;
+      if (strcmp(var.value, "enabled") == 0)
+         videoapproach1_enable = true;
+   }
 
    var.key = "mess_media_type";
    var.value = NULL;
@@ -104,8 +181,8 @@ static void check_variables(void)
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
       fprintf(stderr, "value: %s\n", var.value);
-      sprintf(messMediaType,"-%s",var.value);
-	  fprintf(stderr, "mess value: %s\n", messMediaType);
+      sprintf(mediaType,"-%s",var.value);
+	  fprintf(stderr, "mess value: %s\n", mediaType);
    }
    
    var.key = "mess_softlist_enable";
@@ -119,6 +196,18 @@ static void check_variables(void)
       if (strcmp(var.value, "disabled") == 0)
          softlist_enabled = false;       
    }      
+   
+   var.key = "mess_softlist_auto";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      fprintf(stderr, "value: %s\n", var.value);
+      if (strcmp(var.value, "enabled") == 0)
+         softlist_auto = true;
+      if (strcmp(var.value, "disabled") == 0)
+         softlist_auto = false;       
+   }       
 
    var.key = "mess_boot_bios";
    var.value = NULL;
@@ -127,12 +216,143 @@ static void check_variables(void)
    {
       fprintf(stderr, "value: %s\n", var.value);
       if (strcmp(var.value, "enabled") == 0)
-         bios_enabled = true;
+         boot_to_bios_enabled = true;
       if (strcmp(var.value, "disabled") == 0)
-         bios_enabled = false;       
+         boot_to_bios_enabled = false;       
+   } 
+   
+   var.key = "mess_boot_osd";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      fprintf(stderr, "value: %s\n", var.value);
+      if (strcmp(var.value, "enabled") == 0)
+         boot_to_osd_enabled = true;
+      if (strcmp(var.value, "disabled") == 0)
+         boot_to_osd_enabled = false;       
+   }
+   
+   var.key = "mess_commandline";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      fprintf(stderr, "value: %s\n", var.value);
+      if (strcmp(var.value, "enabled") == 0)
+         commandline_enabled = true;
+      if (strcmp(var.value, "disabled") == 0)
+         commandline_enabled = false;       
    }   
    
+#elif defined(WANT_UME)
+
+   var.key = "ume_current_mouse_enable";
    
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      fprintf(stderr, "value: %s\n", var.value);
+      if (strcmp(var.value, "disabled") == 0)
+         mouse_enable = false;
+      if (strcmp(var.value, "enabled") == 0)
+         mouse_enable = true;
+   }
+
+   var.key = "ume_current_nagscreenpatch_enable";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      fprintf(stderr, "value: %s\n", var.value);
+      if (strcmp(var.value, "disabled") == 0)
+         nagscreenpatch_enable = false;
+      if (strcmp(var.value, "enabled") == 0)
+         nagscreenpatch_enable = true;
+   }
+
+   var.key = "ume_current_videoapproach1_enable";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      fprintf(stderr, "value: %s\n", var.value);
+      if (strcmp(var.value, "disabled") == 0)
+         videoapproach1_enable = false;
+      if (strcmp(var.value, "enabled") == 0)
+         videoapproach1_enable = true;
+   }
+
+   var.key = "ume_media_type";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      fprintf(stderr, "value: %s\n", var.value);
+      sprintf(mediaType,"-%s",var.value);
+	  fprintf(stderr, "mess value: %s\n", mediaType);
+   }
+   
+   var.key = "ume_softlist_enable";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      fprintf(stderr, "value: %s\n", var.value);
+      if (strcmp(var.value, "enabled") == 0)
+         softlist_enabled = true;
+      if (strcmp(var.value, "disabled") == 0)
+         softlist_enabled = false;       
+   }      
+   
+   var.key = "ume_softlist_auto";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      fprintf(stderr, "value: %s\n", var.value);
+      if (strcmp(var.value, "enabled") == 0)
+         softlist_auto = true;
+      if (strcmp(var.value, "disabled") == 0)
+         softlist_auto = false;       
+   }       
+
+   var.key = "ume_boot_bios";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      fprintf(stderr, "value: %s\n", var.value);
+      if (strcmp(var.value, "enabled") == 0)
+         boot_to_bios_enabled = true;
+      if (strcmp(var.value, "disabled") == 0)
+         boot_to_bios_enabled = false;       
+   } 
+
+   var.key = "ume_boot_osd";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      fprintf(stderr, "value: %s\n", var.value);
+      if (strcmp(var.value, "enabled") == 0)
+         boot_to_osd_enabled = true;
+      if (strcmp(var.value, "disabled") == 0)
+         boot_to_osd_enabled = false;       
+   }   
+
+   var.key = "ume_commandline";
+   var.value = NULL;
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      fprintf(stderr, "value: %s\n", var.value);
+      if (strcmp(var.value, "enabled") == 0)
+         commandline_enabled = true;
+      if (strcmp(var.value, "disabled") == 0)
+         commandline_enabled = false;       
+   }      
+   
+#endif     
 }
 
 unsigned retro_api_version(void)
@@ -143,11 +363,11 @@ unsigned retro_api_version(void)
 void retro_get_system_info(struct retro_system_info *info)
 {   	
    memset(info, 0, sizeof(*info));
-#ifdef WANT_MAME
+#if defined(WANT_MAME)
    info->library_name = "MAME 2014";
-#elif WANT_MESS
+#elif defined(WANT_MESS)
    info->library_name = "MESS 2014";
-#elif WANT_UME
+#elif defined(WANT_UME)
    info->library_name = "UME 2014";   
 #else
    info->library_name = "N/D";
@@ -305,7 +525,7 @@ bool retro_load_game(const struct retro_game_info *info)
 #else
 	memset(videoBuffer,0,1024*1024*2*2);
 #endif
-	char basename[128];
+	char basename[256];
 	
 	extract_basename(basename, info->path, sizeof(basename));
   	extract_directory(g_rom_dir, info->path, sizeof(g_rom_dir));
@@ -338,3 +558,4 @@ bool retro_load_game_special(unsigned game_type, const struct retro_game_info *i
 void retro_cheat_reset(void){}
 void retro_cheat_set(unsigned unused, bool unused1, const char* unused2){}
 void retro_set_controller_port_device(unsigned in_port, unsigned device){}
+

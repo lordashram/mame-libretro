@@ -17,10 +17,16 @@
 static int ui_ipt_pushchar=-1;
 
 char g_rom_dir[1024];
-char messMediaType[10];
+char mediaType[10];
 
 static bool softlist_enabled;
-static bool bios_enabled;
+static bool softlist_auto;
+static bool boot_to_bios_enabled;
+static bool boot_to_osd_enabled;
+static bool commandline_enabled;
+static bool experimental_cmdline;
+
+static bool arcade=FALSE;
 
 #ifdef _WIN32
 char slash = '\\';
@@ -28,11 +34,11 @@ char slash = '\\';
 char slash = '/';
 #endif
 
-#ifdef WANT_MAME
+#if defined(WANT_MAME)
 const char core[] = "mame";
-#elif WANT_MESS
+#elif defined(WANT_MESS)
 const char core[] = "mess";
-#elif WANT_UME
+#elif defined(WANT_UME)
 const char core[] = "ume";
 #endif 	
 
@@ -42,7 +48,7 @@ const char core[] = "ume";
 
 static bool mouse_enable = false;
 static bool videoapproach1_enable = false;
-bool nagscreenpatch_enable = false; //TODO IN  0151
+bool nagscreenpatch_enable = false;
 
 static void extract_basename(char *buf, const char *path, size_t size)
 {
@@ -120,6 +126,7 @@ static int screenRot = 0;
 int vertical,orient;
 
 static char MgamePath[1024];
+static char MparentPath[1024];
 static char MgameName[512];
 static char MsystemName[512];
 static char gameName[1024];
@@ -151,12 +158,11 @@ cothread_t emuThread;
 static const char* xargv[] = {
 	core,
 	"-joystick",
-	"-noautoframeskip",
 	"-samplerate",
 	"48000",
 	"-sound",
 	"-cheat",
-	"-rompath",
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -181,6 +187,34 @@ static const char* xargv[] = {
 	NULL,		
 	NULL,		
 	NULL,	
+	NULL,	
+	NULL,	
+	NULL,	
+	NULL,	
+	NULL,	
+	NULL,
+	NULL,	
+	NULL,	
+	NULL,	
+	NULL,	
+	NULL,		
+	NULL,		
+	NULL,		
+	NULL,		
+	NULL,	
+	NULL,	
+	NULL,	
+	NULL,	
+	NULL,	
+	NULL,	
+	NULL,
+	NULL,	
+	NULL,	
+	NULL,	
+	NULL,	
+	NULL,	
+	NULL,	
+	NULL,
 	NULL,	
 	NULL,	
 	NULL,	
@@ -253,6 +287,36 @@ static int parseSystemName(char* path, char* systemName) {
 	return 1;
 }
 
+static int parseParentPath(char* path, char* parentPath) {
+	int i;
+	int j=0;
+	int slashIndex[2];
+	int len = strlen(path);
+	
+	if (len < 1) {
+		return 0;
+	}
+
+	for (i = len - 1; i >=0; i--) {
+		if (j<2)
+		{
+		   if (path[i] == slash) {
+			   slashIndex[j] = i;
+			   j++;
+		   } 
+		}
+		else
+		   break;
+	}
+	if (slashIndex < 0 ) {
+		return 0;
+	}
+	
+	strncpy(parentPath, path, slashIndex[1]);
+	
+	write_log("parentPath=%s\n", parentPath);
+	return 1;
+}
 
 static int getGameInfo(char* gameName, int* rotation, int* driverIndex) {
 	
@@ -260,17 +324,20 @@ static int getGameInfo(char* gameName, int* rotation, int* driverIndex) {
 	int num=driver_list::find(gameName);
 
 	if (num != -1){
-		fprintf(stderr, "%-18s%s\n", driver_list::driver(num).name, driver_list::driver(num).description);
-
-		if(driver_list::driver(num).flags& GAME_TYPE_ARCADE)write_log("type: ARCADE system\n");
+		fprintf(stderr, "%s%s\n", driver_list::driver(num).name, driver_list::driver(num).description);
+		if(driver_list::driver(num).flags& GAME_TYPE_ARCADE)
+		{
+		   write_log("type: ARCADE system\n");
+		   arcade=TRUE;
+		}
 		else if(driver_list::driver(num).flags& GAME_TYPE_CONSOLE)write_log("type: CONSOLE system\n");
 		else if(driver_list::driver(num).flags& GAME_TYPE_COMPUTER)write_log("type: COMPUTER system\n");
 		gameFound = 1;
 	}
-	else	write_log("Error Driver %s not found!\n", gameName);
+	else	write_log("driver %s not found %i\n", gameName, num);
 
 	return gameFound;
-} 
+}
 
 
 #include "../portmedia/pmmidi.c"
@@ -304,13 +371,32 @@ int executeGame(char* path) {
 		strcpy(MsystemName,path );
 	//	return -1;
 	}
+	//get the parent path
+	result = parseParentPath(path, MparentPath);
+	if (result == 0) {
+		write_log("parse path failed! path=%s\n", path);
+		strcpy(MparentPath,path );
+	//	return -1;
+	}	
 	
 #ifdef WANT_MAME	
-	//find the game info. Exit if game driver was not found.
+	//find if the driver exists for MgameName, if not, exit
 	if (getGameInfo(MgameName, &gameRot, &driverIndex) == 0) {
-		write_log("game not found: %s\n", MgameName);
+		write_log("driver not found: %s\n", MgameName);
 		return -2;
-	}
+	}	
+#else
+    if(!commandline_enabled)
+	{
+	   //find if the driver exists for MgameName, if not, check if a driver exists for MsystemName, if not, exit
+	   if (getGameInfo(MgameName, &gameRot, &driverIndex) == 0) {
+		   write_log("driver not found: %s\n", MgameName);
+		   if (getGameInfo(MsystemName, &gameRot, &driverIndex) == 0) {
+		      write_log("driver not found: %s\n", MsystemName);
+   		         return -2;
+	       }
+	   }
+    }	   
 #endif	
 
 	//tate enabled	
@@ -340,10 +426,6 @@ int executeGame(char* path) {
 	//find how many parameters we have
 	for (paramCount = 0; xargv[paramCount] != NULL; paramCount++)
 		printf("args: %s\n",xargv[paramCount]);
-
-	char rom_dir[256];
-	sprintf(rom_dir, "%s", MgamePath);
-	xargv[paramCount++] = (char*)(rom_dir);		
 	
 	xargv[paramCount++] = (char*)("-cfg_directory");
 	
@@ -410,12 +492,11 @@ int executeGame(char* path) {
 	char ini_dir[256];
 	sprintf(ini_dir, "%s%c%s%c%s", retro_system_directory, slash, core, slash, "ini");
 	xargv[paramCount++] = (char*)(ini_dir);	
-	
 	xargv[paramCount++] = (char*)("-hashpath");
 	
 	char hash_dir[256];
 	sprintf(hash_dir, "%s%c%s%c%s", retro_system_directory, slash, core, slash, "hash");
-	xargv[paramCount++] = (char*)(hash_dir);		
+	xargv[paramCount++] = (char*)(hash_dir);				
 	
 	if (tate) {
 		if (screenRot == 3) {
@@ -431,27 +512,65 @@ int executeGame(char* path) {
 		}
 	}
 
-#ifdef WANT_MAME	
-   xargv[paramCount++] = MgameName;
+	xargv[paramCount++] = (char*)("-rompath");
+	
+	char rom_dir[256];
+		
+#ifdef WANT_MAME
+   sprintf(rom_dir, "%s", MgamePath);
+   xargv[paramCount++] = (char*)(rom_dir);		   
+   if(!boot_to_osd_enabled)
+      xargv[paramCount++] = MgameName;
+  
 #else
-   if(softlist_enabled)
+   if(!commandline_enabled)
    {
-      xargv[paramCount++] = MsystemName;   
-	  if(!bios_enabled)
-         xargv[paramCount++] = (char*)MgameName;        
-   }
-   else
-   {
-      if (strcmp(messMediaType, "-rom") == 0) {
-         xargv[paramCount++] = MgameName;
-      } else {
-         xargv[paramCount++] = MsystemName;
-         xargv[paramCount++] = (char*)messMediaType;
-         xargv[paramCount++] = (char*)gameName;
-      }   
-   
-   }
-#endif 	 
+	   if(!boot_to_osd_enabled)
+	   {
+		  sprintf(rom_dir, "%s", MgamePath);
+		  xargv[paramCount++] = (char*)(rom_dir);		   
+		  if(softlist_enabled)
+		  {
+			 if(!arcade)
+			 {
+				xargv[paramCount++] = MsystemName;   
+				if(!boot_to_bios_enabled)
+				{
+				   if(!softlist_auto)
+					  xargv[paramCount++] = (char*)mediaType;
+				   xargv[paramCount++] = (char*)MgameName;
+				}
+			 }
+			 else
+			 {
+				xargv[paramCount++] = (char*)MgameName;
+			 }	     
+		  }
+		  else
+		  {
+			 if (strcmp(mediaType, "-rom") == 0) {
+				xargv[paramCount++] = MgameName;
+			 } else {
+				xargv[paramCount++] = MsystemName;
+				xargv[paramCount++] = (char*)mediaType;
+				xargv[paramCount++] = (char*)gameName;
+			 }   
+	   
+		  }
+		}
+		else
+		{
+		  sprintf(rom_dir, "%s;%s", MgamePath,MparentPath);
+		  xargv[paramCount++] = (char*)(rom_dir);		   	
+		}
+	}
+	else
+	
+	   xargv[paramCount++] = (char*)gameName;
+	
+
+   	
+#endif 	 	 
 	
 	write_log("frontend parameters:%i\n", paramCount);
 
@@ -474,6 +593,8 @@ int executeGame(char* path) {
 //  main
 //============================================================
 
+#include "retroexpcmd.c"
+
 #ifdef __cplusplus
 extern "C"
 #endif
@@ -483,7 +604,20 @@ int mmain(int argc, const char *argv)
 	int result = 0;
 	
 	strcpy(gameName,argv);
-	write_log("executing game... %s\n", gameName);
-	result = executeGame(gameName);
+
+	if(experimental_cmdline){
+  	
+		parse_cmdline(argv);
+
+	        write_log("executing from experimental cmdline... %s\n", gameName);
+		result = executeGame_cmd(ARGUV[ARGUC-1]);
+	}
+	else
+	{
+		write_log("executing game... %s\n", gameName);
+		result = executeGame(gameName);
+	}
+
 	return 1;
 }
+
