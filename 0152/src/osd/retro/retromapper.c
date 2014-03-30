@@ -46,11 +46,11 @@ void retro_set_environment(retro_environment_t cb)
 #elif WANT_MESS
       { "mess_softlist_enable", "Use softlists; enabled|disabled" },   
 	  { "mess_boot_bios", "Load BIOS only; disabled|enabled" },   
-      { "mess_media_type", "Media type; cart|flop|crdm|cass|hard|serl|prin" },   
+      { "mess_media_type", "Media type; cart|flop|cdrm|cass|hard|serl|prin" },   
 	  
 #elif WANT_UME
       { "mess_softlist_enable", "Use softlists; enabled|disabled" },   
-      { "mess_media_type", "Media type; cart|rom|flop|crdm|cass|hard|serl|prin" },   
+      { "mess_media_type", "Media type; cart|rom|flop|cdrm|cass|hard|serl|prin" },   
 #endif   
       { NULL, NULL },
    };
