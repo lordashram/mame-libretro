@@ -96,7 +96,7 @@ EMUOBJS = \
 	$(EMUOBJ)/machine.o \
 	$(EMUOBJ)/mconfig.o \
 	$(EMUOBJ)/memarray.o \
-	$(EMUOBJ)/memory.o \
+	$(EMUOBJ)/emumemory.o \
 	$(EMUOBJ)/network.o \
 	$(EMUOBJ)/output.o \
 	$(EMUOBJ)/render.o \
@@ -243,7 +243,7 @@ include $(EMUSRC)/bus/bus.mak
 # core optional library
 #-------------------------------------------------
 
-$(LIBOPTIONAL): $(CPUOBJS) $(SOUNDOBJS) $(VIDEOOBJS) $(MACHINEOBJS) $(NETLISTOBJS)
+$(LIBOPTIONAL): $(CPUOBJS) $(SOUNDOBJS) $(VIDEOOBJS) $(MACHINEOBJS) $(BUSOBJS) $(NETLISTOBJS)
 $(LIBBUS): $(BUSOBJS)
 
 #-------------------------------------------------

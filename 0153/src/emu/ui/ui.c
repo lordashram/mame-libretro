@@ -321,6 +321,10 @@ void ui_manager::display_startup_screens(bool first_time, bool show_disclaimer)
 	show_gameinfo = show_warnings = show_disclaimer = FALSE;
 	#endif
 
+ #ifdef RETRO
+   show_gameinfo = show_warnings = show_disclaimer = FALSE;
+ #endif
+
 	// loop over states
 	set_handler(handler_ingame, 0);
 	for (state = 0; state < maxstate && !machine().scheduled_event_pending() && !ui_menu::stack_has_special_main_menu(); state++)
